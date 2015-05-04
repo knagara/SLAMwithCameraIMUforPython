@@ -1,117 +1,77 @@
 # -*- coding: utf-8 -*-
+
+"""
+GetSonsorData.py
+Subscribe sensor data and save them as CSV file.
+"""
+
 import sys
 import numpy as np
 import paho.mqtt.client as mqtt
 
 
+#This method is called when mqtt is connected.
 def on_connect(client, userdata, flags, rc):
     print('Connected with result code '+str(rc))
     client.subscribe("SLAM/input/#")
+				
+
+#Append new data array to the array.
+def appendData(sensor, msg, ary):
+	global isFirst
+	global time0
+	
+	data = msg.split(',')
+	if(isFirst[sensor]):
+		time0[sensor] = long(data[0])
+	ary0 = np.array([long(data[0])-time0[sensor],float(data[1]),float(data[2]),float(data[3])])
+	if(isFirst[sensor]):
+		ary = ary0
+		isFirst[sensor] = False
+	else:
+		ary = np.c_[ary, ary0]
+	return ary
 
 
+#This method is called when message is arrived.
 def on_message(client, userdata, msg):
 	global isFirst
-	global time0, time
-	global accel_x, accel_y, accel_z
-	global accel_g_x, accel_g_y, accel_g_z
-	global gyro_x, gyro_y, gyro_z
-	global magnet_x, magnet_y, magnet_z
+	global time0
+	global accel, accel_g, gyro, magnet, orientation
 
     #print(msg.topic + ' ' + str(msg.payload))
 
-    #Append data to array
-	if(str(msg.topic) == "SLAM/input/time"):
-		if(isFirst):
-			time0 = long(str(msg.payload))
-		time = np.append(time, long(str(msg.payload)) - time0)
-	elif(str(msg.topic) == "SLAM/input/acceleration/x"):
-		accel_x = np.append(accel_x, float(str(msg.payload)))
-	elif(str(msg.topic) == "SLAM/input/acceleration/y"):
-		accel_y = np.append(accel_y, float(str(msg.payload)))
-	elif(str(msg.topic) == "SLAM/input/acceleration/z"):
-		accel_z = np.append(accel_z, float(str(msg.payload)))
-	elif(str(msg.topic) == "SLAM/input/acceleration_with_gravity/x"):
-		accel_g_x = np.append(accel_g_x, float(str(msg.payload)))
-	elif(str(msg.topic) == "SLAM/input/acceleration_with_gravity/y"):
-		accel_g_y = np.append(accel_g_y, float(str(msg.payload)))
-	elif(str(msg.topic) == "SLAM/input/acceleration_with_gravity/z"):
-		accel_g_z = np.append(accel_g_z, float(str(msg.payload)))
-	elif(str(msg.topic) == "SLAM/input/gyro/x"):
-		gyro_x = np.append(gyro_x, float(str(msg.payload)))
-	elif(str(msg.topic) == "SLAM/input/gyro/y"):
-		gyro_y = np.append(gyro_y, float(str(msg.payload)))
-	elif(str(msg.topic) == "SLAM/input/gyro/z"):
-		gyro_z = np.append(gyro_z, float(str(msg.payload)))
-	elif(str(msg.topic) == "SLAM/input/magnet/x"):
-		magnet_x = np.append(magnet_x, float(str(msg.payload)))
-	elif(str(msg.topic) == "SLAM/input/magnet/y"):
-		magnet_y = np.append(magnet_y, float(str(msg.payload)))
-	elif(str(msg.topic) == "SLAM/input/magnet/z"):
-		magnet_z = np.append(magnet_z, float(str(msg.payload)))
+    #Append data to the array
+	if(str(msg.topic) == "SLAM/input/acceleration"):
+		accel = appendData("accel",str(msg.payload),accel)
+	elif(str(msg.topic) == "SLAM/input/acceleration_with_gravity"):
+		accel_g = appendData("accel_g",str(msg.payload),accel_g)
+	elif(str(msg.topic) == "SLAM/input/gyro"):
+		gyro = appendData("gyro",str(msg.payload),gyro)
+	elif(str(msg.topic) == "SLAM/input/magnet"):
+		magnet = appendData("magnet",str(msg.payload),magnet)
+	elif(str(msg.topic) == "SLAM/input/orientation"):
+		orientation = appendData("orientation",str(msg.payload),orientation)
 	elif(str(msg.topic) == "SLAM/input/stop"):
-		np.savetxt('./data/time.txt', time, delimiter=',')
-		np.savetxt('./data/accel_x.txt', accel_x, delimiter=',')
-		np.savetxt('./data/accel_y.txt', accel_y, delimiter=',')
-		np.savetxt('./data/accel_z.txt', accel_z, delimiter=',')
-		np.savetxt('./data/accel_g_x.txt', accel_g_x, delimiter=',')
-		np.savetxt('./data/accel_g_y.txt', accel_g_y, delimiter=',')
-		np.savetxt('./data/accel_g_z.txt', accel_g_z, delimiter=',')
-		np.savetxt('./data/gyro_x.txt', gyro_x, delimiter=',')
-		np.savetxt('./data/gyro_y.txt', gyro_y, delimiter=',')
-		np.savetxt('./data/gyro_z.txt', gyro_z, delimiter=',')
-		np.savetxt('./data/magnet_x.txt', magnet_x, delimiter=',')
-		np.savetxt('./data/magnet_y.txt', magnet_y, delimiter=',')
-		np.savetxt('./data/magnet_z.txt', magnet_z, delimiter=',')
-		"""
-		accel_x_t = np.c_[time,accel_x]
-		accel_y_t = np.c_[time,accel_y]
-		accel_z_t = np.c_[time,accel_z]
-		accel_g_x_t = np.c_[time,accel_g_x]
-		accel_g_y_t = np.c_[time,accel_g_y]
-		accel_g_z_t = np.c_[time,accel_g_z]
-		gyro_x_t = np.c_[time,gyro_x]
-		gyro_y_t = np.c_[time,gyro_y]
-		gyro_z_t = np.c_[time,gyro_z]
-		magnet_x_t = np.c_[time,magnet_x]
-		magnet_y_t = np.c_[time,magnet_y]
-		magnet_z_t = np.c_[time,magnet_z]
-		np.savetxt('accel_x.txt', accel_x_t, delimiter=',')
-		np.savetxt('accel_y.txt', accel_y_t, delimiter=',')
-		np.savetxt('accel_z.txt', accel_z_t, delimiter=',')
-		np.savetxt('accel_g_x.txt', accel_g_x_t, delimiter=',')
-		np.savetxt('accel_g_y.txt', accel_g_y_t, delimiter=',')
-		np.savetxt('accel_g_z.txt', accel_g_z_t, delimiter=',')
-		np.savetxt('gyro_x.txt', gyro_x_t, delimiter=',')
-		np.savetxt('gyro_y.txt', gyro_y_t, delimiter=',')
-		np.savetxt('gyro_z.txt', gyro_z_t, delimiter=',')
-		np.savetxt('magnet_x.txt', magnet_x_t, delimiter=',')
-		np.savetxt('magnet_y.txt', magnet_y_t, delimiter=',')
-		np.savetxt('magnet_z.txt', magnet_z_t, delimiter=',')
-		"""
+		np.savetxt('./data/accel.csv', accel, delimiter=',')
+		np.savetxt('./data/accel_g.csv', accel_g, delimiter=',')
+		np.savetxt('./data/gyro.csv', gyro, delimiter=',')
+		np.savetxt('./data/magnet.csv', magnet, delimiter=',')
+		np.savetxt('./data/orientation.csv', orientation, delimiter=',')		
 		sys.exit()
 
-	if(isFirst):
-		isFirst = False
 
-
+#Main method
 if __name__ == '__main__':
 
 	#global variables
-	isFirst = True
-	time0 = 0
-	time = np.array([])
-	accel_x = np.array([])
-	accel_y = np.array([])
-	accel_z = np.array([])
-	accel_g_x = np.array([])
-	accel_g_y = np.array([])
-	accel_g_z = np.array([])
-	gyro_x = np.array([])
-	gyro_y = np.array([])
-	gyro_z = np.array([])
-	magnet_x = np.array([])
-	magnet_y = np.array([])
-	magnet_z = np.array([])
+	isFirst = {"accel":True, "accel_g":True, "gyro":True, "magnet":True, "orientation":True}
+	time0 = {"accel":0, "accel_g":0, "gyro":0, "magnet":0, "orientation":0}
+	accel = np.array([])
+	accel_g = np.array([])
+	gyro = np.array([])
+	magnet = np.array([])
+	orientation = np.array([])
 
 	#Mqtt
 	username = 'admin'
