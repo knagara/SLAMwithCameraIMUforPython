@@ -20,12 +20,12 @@ def on_connect(client, userdata, flags, rc):
 def appendData(data):
 	global isFirst
 	global time
-	global accel, gravity, gyro, magnet, orientation
+	global accel, linear_accel, gravity, gyro, magnet, orientation
 
 	if(isFirst):
 		time = long(data[0])
 
-	accel0 = np.array([long(data[0])-time,float(data[1]),float(data[2]),float(data[3])])
+	accel0 = np.array([long(data[0])-time,float(data[1]),float(data[2]),float(data[3]),float(data[13]),float(data[14]),float(data[15])])
 
 	if(isFirst):
 		accel = accel0
@@ -38,7 +38,7 @@ def appendData(data):
 def on_message(client, userdata, msg):
 	global isFirst
 	global time
-	global accel, gravity, gyro, magnet, orientation
+	global accel, linear_accel, gravity, gyro, magnet, orientation
 
     #print(msg.topic + ' ' + str(msg.payload))
 
@@ -62,6 +62,7 @@ if __name__ == '__main__':
 	isFirst = True
 	time = 0
 	accel = np.array([])
+	linear_accel = np.array([])
 	gravity = np.array([])
 	gyro = np.array([])
 	magnet = np.array([])

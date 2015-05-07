@@ -20,19 +20,25 @@ def on_connect(client, userdata, flags, rc):
 
 #This method is called when message is arrived.
 def on_message(client, userdata, msg):
-	global sensor, x
+	global sensor, x, a
 
 	data = str(msg.payload).split('&')
 	#Append data to the array
 	if(str(msg.topic) == "SLAM/input/all"):
 		sensor.setData(data)
-		ori = sensor.calcOrientation()
-		sensor.calcGlobalAcceleration()
-		x = sensor.localization()
-		client.publish("SLAM/output/position",str(x[0])+"&"+str(x[1])+"&"+str(x[2]))
-		client.publish("SLAM/output/orientation",str(ori[0])+"&"+str(ori[1])+"&"+str(ori[2]))
+		sensor.processData()
+		x = sensor.getPosition()
+		ori = sensor.getOrientation()
+		a = sensor.getAcceleration()
+		v = sensor.getVelocity()
+		client.publish("SLAM/output/accel",str(a[0])+"&"+str(a[1])+"&"+str(a[2]))
+		client.publish("SLAM/output/velocity",str(v[0])+"&"+str(v[1])+"&"+str(v[2]))
+		#client.publish("SLAM/output/position",str(x[0])+"&"+str(x[1])+"&"+str(x[2]))
+		#client.publish("SLAM/output/orientation",str(ori[0])+"&"+str(ori[1])+"&"+str(ori[2]))
+		client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(ori[0])+"&"+str(ori[1])+"&"+str(ori[2]))
 	elif(str(msg.topic) == "SLAM/input/stop"):
 		print("stop")
+		client.publish("SLAM/output/stop","true")
 		sensor.init()
 
 
@@ -45,6 +51,8 @@ if __name__ == '__main__':
 	x = np.array([0.0,0.0,0.0])
 	#orientation of device
 	ori = np.array([0.0,0.0,0.0])
+	#acceleration of device
+	a = np.array([0.0,0.0,0.0])
 
 	#Mqtt
 	username = 'admin'
