@@ -10,6 +10,7 @@ import cv2 as cv
 import numpy as np
 import paho.mqtt.client as mqtt
 from sensor import Sensor
+from state import State
 
 
 #This method is called when mqtt is connected.
@@ -27,10 +28,10 @@ def on_message(client, userdata, msg):
 	if(str(msg.topic) == "SLAM/input/all"):
 		sensor.setData(data)
 		sensor.processData()
-		x = sensor.getPosition()
-		ori = sensor.getOrientation()
-		a = sensor.getAcceleration()
-		v = sensor.getVelocity()
+		x = state.getPosition()
+		v = state.getVelocity()
+		a = state.getAcceleration()
+		ori = state.getOrientation()
 		client.publish("SLAM/output/accel",str(a[0])+"&"+str(a[1])+"&"+str(a[2]))
 		client.publish("SLAM/output/velocity",str(v[0])+"&"+str(v[1])+"&"+str(v[2]))
 		#client.publish("SLAM/output/position",str(x[0])+"&"+str(x[1])+"&"+str(x[2]))
@@ -45,8 +46,10 @@ def on_message(client, userdata, msg):
 #Main method
 if __name__ == '__main__':
 
+	#state.py
+	state = State()
 	#sensor.py
-	sensor = Sensor()
+	sensor = Sensor(state)
 	#position of device
 	x = np.array([0.0,0.0,0.0])
 	#orientation of device

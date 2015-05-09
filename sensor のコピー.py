@@ -11,6 +11,9 @@ methods:
 	calcRotationMatrix()
 	calibrateAcceleration()
 	calcGlobalAcceleration()
+	localization()
+	getPosition()
+	getOrientation()
 	init()
 """
 
@@ -22,9 +25,6 @@ import numpy as np
 class Sensor:
 
 	def __init__(self,_state):
-		#state.py
-		self.state = _state
-		#variables
 		self.accel = np.array([])
 		self.gravity = np.array([])
 		self.magnet = np.array([])
@@ -45,38 +45,24 @@ class Sensor:
 		self.rotY_ = np.identity(3)
 		self.rotZ_ = np.identity(3)
 		self.rot_ = np.identity(3)
-
-
-	def init(self):
-		#state.py
-		self.state.init()
-		#variables
-		self.accel = np.array([])
-		self.gravity = np.array([])
-		self.magnet = np.array([])
-		self.magnet_fixed = np.array([])
-		self.gyro = np.array([])
-		self.orientation = np.array([0.0,0.0,0.0])
-		self.cosx = 0.0
-		self.cosy = 0.0
-		self.cosz = 0.0
-		self.offset1 = np.array([0.0,0.0,0.63776811])
-		self.offset2 = np.array([0.0,0.0,0.51812505])
-		self.offset_ = np.array([0.0,0.0,0.0])
-		self.rotX = np.identity(3)
-		self.rotY = np.identity(3)
-		self.rotXY = np.identity(3)
-		self.rot = np.identity(3)
-		self.rotX_ = np.identity(3)
-		self.rotY_ = np.identity(3)
-		self.rotZ_ = np.identity(3)
-		self.rot_ = np.identity(3)
+		self.x = np.array([0.0,0.0,0.0])
+		self.x1 = np.array([0.0,0.0,0.0])
+		self.x2 = np.array([0.0,0.0,0.0])
+		self.v = np.array([0.0,0.0,0.0])
+		self.v1 = np.array([0.0,0.0,0.0])
+		self.a = np.array([0.0,0.0,0.0])
+		self.a1 = np.array([0.0,0.0,0.0])
+		self.t = 0
+		self.t1 = 0
+		self.t2 = 0
 
 
 	#Set new data
 	def setData(self,data):
 		#set time
-		self.state.setTime(float(long(data[0]) / 1000.0))
+		self.t2 = self.t1
+		self.t1 = self.t
+		self.t = float(long(data[0]) / 1000.0)
 
 		#set sensor data
 		self.accel = np.array([float(data[1]),float(data[2]),float(data[3])])
@@ -91,7 +77,7 @@ class Sensor:
 		self.calcRotationMatrix()
 		#self.calibrateAcceleration()
 		self.calcGlobalAcceleration()
-		self.state.localization()
+		self.localization()
 
 
 	#Calc orientation by using gravity and magnet
@@ -109,8 +95,6 @@ class Sensor:
 		self.rotXY = np.dot(self.rotY,self.rotX)
 		self.magnet_fixed = np.dot(self.rotXY,self.magnet)
 		self.orientation[2] = atan2(-self.magnet_fixed[1],self.magnet_fixed[0])
-
-		self.state.setOrientation(self.orientation)
 
 		#print(str(degrees(self.orientation[0]))+" "+str(degrees(self.orientation[1]))+" "+str(degrees(self.orientation[2])))
 
@@ -143,11 +127,80 @@ class Sensor:
 
 	#Calc accel in global coordinates by using orientation
 	def calcGlobalAcceleration(self):
+		#save previous accel
+		self.a1 = self.a
 		#global accel = R(Z)R(Y)R(X) * accel
-		self.state.setAccel(np.dot(self.rot_,self.accel))
+		self.a = np.dot(self.rot_,self.accel)
 
 		#print(self.a)
 		#print(self.accel)
 		#print(self.a+np.dot(self.rot_,self.gravity))
 		#print(np.dot(self.rot_,self.gravity))
+
+
+	#Estimate position of device
+	#return position(x,y,z)
+	def localization(self):
+
+		if(self.t1 == 0):
+			pass
+		elif(self.t2 == 0):
+			self.v = (self.t - self.t1)*self.a1
+		else:
+			self.v1 = self.v
+			self.v = self.v1 + (self.t - self.t1)*self.a1
+			self.x1 = self.x
+			self.x = self.x1 + (self.t - self.t1)*self.v1 + 0.5*(self.t - self.t1)*(self.t - self.t1)*self.a1
+
+			#print(self.x)
+
+
+	#getter
+	def getPosition(self):
+		return self.x
+
+	#getter
+	def getOrientation(self):
+		return self.orientation
+
+	#getter
+	def getAcceleration(self):
+		return self.a
+
+	#getter
+	def getVelocity(self):
+		return self.v
+
+
+	def init(self):
+		self.accel = np.array([])
+		self.gravity = np.array([])
+		self.magnet = np.array([])
+		self.magnet_fixed = np.array([])
+		self.gyro = np.array([])
+		self.orientation = np.array([0.0,0.0,0.0])
+		self.cosx = 0.0
+		self.cosy = 0.0
+		self.cosz = 0.0
+		self.offset1 = np.array([0.0,0.0,0.63776811])
+		self.offset2 = np.array([0.0,0.0,0.51812505])
+		self.offset_ = np.array([0.0,0.0,0.0])
+		self.rotX = np.identity(3)
+		self.rotY = np.identity(3)
+		self.rotXY = np.identity(3)
+		self.rot = np.identity(3)
+		self.rotX_ = np.identity(3)
+		self.rotY_ = np.identity(3)
+		self.rotZ_ = np.identity(3)
+		self.rot_ = np.identity(3)
+		self.x = np.array([0.0,0.0,0.0])
+		self.x1 = np.array([0.0,0.0,0.0])
+		self.x2 = np.array([0.0,0.0,0.0])
+		self.v = np.array([0.0,0.0,0.0])
+		self.v1 = np.array([0.0,0.0,0.0])
+		self.a = np.array([0.0,0.0,0.0])
+		self.a1 = np.array([0.0,0.0,0.0])
+		self.t = 0
+		self.t1 = 0
+		self.t2 = 0
 
