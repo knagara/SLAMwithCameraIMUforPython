@@ -102,7 +102,11 @@ class Sensor:
 		#x roll
 		self.orientation[0] = atan2(self.gravity[1],self.gravity[2])
 		#y pitch
-		self.orientation[1] = atan2(-self.gravity[0],sqrt(pow(self.gravity[1],2)+pow(self.gravity[2],2)))
+		#sign(+ or -) is decided here
+		sign = 1.0
+		if(self.gravity[2]<0): #decided by z axis
+			sign = -1.0
+		self.orientation[1] = atan2(-self.gravity[0],sign*hypot(self.gravity[1],self.gravity[2]))
 		#z yaw
 		cv.Rodrigues(np.array((self.orientation[0],0.0,0.0)),self.rotX)
 		cv.Rodrigues(np.array((0.0,self.orientation[1],0.0)),self.rotY)
@@ -112,7 +116,7 @@ class Sensor:
 
 		self.state.setOrientation(self.orientation)
 
-		#print(str(degrees(self.orientation[0]))+" "+str(degrees(self.orientation[1]))+" "+str(degrees(self.orientation[2])))
+		print(str(degrees(self.orientation[0]))+" "+str(degrees(self.orientation[1]))+" "+str(degrees(self.orientation[2])))
 
 
 	#Calc rotation matrix from orientation

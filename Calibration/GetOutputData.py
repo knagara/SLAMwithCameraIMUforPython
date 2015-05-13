@@ -66,6 +66,8 @@ def appendDataAll(data):
 		position = np.c_[position, position0]
 		orientation = np.c_[orientation, orientation0]
 
+	#print(str(orientation0[1])+" "+str(orientation0[2])+" "+str(orientation0[3]))
+
 
 #This method is called when message is arrived.
 def on_message(client, userdata, msg):

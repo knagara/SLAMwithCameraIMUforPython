@@ -32,6 +32,7 @@ def on_message(client, userdata, msg):
 		v = state.getVelocity()
 		a = state.getAcceleration()
 		ori = state.getOrientation()
+		#print(x)
 		client.publish("SLAM/output/accel",str(a[0])+"&"+str(a[1])+"&"+str(a[2]))
 		client.publish("SLAM/output/velocity",str(v[0])+"&"+str(v[1])+"&"+str(v[2]))
 		#client.publish("SLAM/output/position",str(x[0])+"&"+str(x[1])+"&"+str(x[2]))
