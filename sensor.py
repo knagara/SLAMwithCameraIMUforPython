@@ -25,12 +25,15 @@ class Sensor:
 		#state.py
 		self.state = _state
 		#variables
+		self.isFirstTime = true
 		self.accel = np.array([])
 		self.gravity = np.array([])
 		self.magnet = np.array([])
 		self.magnet_fixed = np.array([])
 		self.gyro = np.array([])
 		self.orientation = np.array([0.0,0.0,0.0])
+		self.orientation_g = np.array([0.0,0.0,0.0])
+		self.orientation_gyro = np.array([0.0,0.0,0.0])
 		self.cosx = 0.0
 		self.cosy = 0.0
 		self.cosz = 0.0
@@ -51,12 +54,15 @@ class Sensor:
 		#state.py
 		self.state.init()
 		#variables
+		self.isFirstTime = true
 		self.accel = np.array([])
 		self.gravity = np.array([])
 		self.magnet = np.array([])
 		self.magnet_fixed = np.array([])
 		self.gyro = np.array([])
 		self.orientation = np.array([0.0,0.0,0.0])
+		self.orientation_g = np.array([0.0,0.0,0.0])
+		self.orientation_gyro = np.array([0.0,0.0,0.0])
 		self.cosx = 0.0
 		self.cosy = 0.0
 		self.cosz = 0.0
@@ -92,31 +98,54 @@ class Sensor:
 		#self.calibrateAcceleration()
 		self.calcGlobalAcceleration()
 		self.state.localization()
+		if(isFirstTime):
+			isFirstTime = false
+
+
+	#Calc orientation
+	def calcOrientation(self):
+		calcOrientationByGravity()
+		calcOrientationByGyro()
+
+		self.orientation = self.orientation_g
+
+		#set orientation to state class
+		self.state.setOrientation(self.orientation)
+
+		#print(str(degrees(self.orientation[0]))+" "+str(degrees(self.orientation[1]))+" "+str(degrees(self.orientation[2])))
+		print(str(degrees(self.orientation_g[0]))+" "+str(degrees(self.orientation_g[1]))+" "+str(degrees(self.orientation_g[2])))
+		print(str(degrees(self.orientation_gyro[0]))+" "+str(degrees(self.orientation_gyro[1]))+" "+str(degrees(self.orientation_gyro[2])))
+		print("-----------------------------------")
+
+
+	#Calc orientation by using gyro
+	def calcOrientationByGyro(self):
+		if(isFirstTime):
+			self.orientation_gyro = self.orientation_g
+		else:
+			t = self.state.getTimeDelta()
+			self.orientation_gyro = self.state.getOrientation1() + self.gyro * t
 
 
 	#Calc orientation by using gravity and magnet
 	#return orientation
-	#see "Studies on Orientation Measurement in Sports Using Inertial and Magnetic Field Sensors"
-	#    https://www.jstage.jst.go.jp/article/sposun/22/2/22_255/_pdf
-	def calcOrientation(self):
+	#see also "Studies on Orientation Measurement in Sports Using Inertial and Magnetic Field Sensors"
+	#         https://www.jstage.jst.go.jp/article/sposun/22/2/22_255/_pdf
+	def calcOrientationByGravity(self):
 		#x roll
-		self.orientation[0] = atan2(self.gravity[1],self.gravity[2])
+		self.orientation_g[0] = atan2(self.gravity[1],self.gravity[2])
 		#y pitch
 		#sign(+ or -) is decided here
 		sign = 1.0
 		if(self.gravity[2]<0): #decided by z axis
 			sign = -1.0
-		self.orientation[1] = atan2(-self.gravity[0],sign*hypot(self.gravity[1],self.gravity[2]))
+		self.orientation_g[1] = atan2(-self.gravity[0],sign*hypot(self.gravity[1],self.gravity[2]))
 		#z yaw
-		cv.Rodrigues(np.array((self.orientation[0],0.0,0.0)),self.rotX)
-		cv.Rodrigues(np.array((0.0,self.orientation[1],0.0)),self.rotY)
+		cv.Rodrigues(np.array((self.orientation_g[0],0.0,0.0)),self.rotX)
+		cv.Rodrigues(np.array((0.0,self.orientation_g[1],0.0)),self.rotY)
 		self.rotXY = np.dot(self.rotY,self.rotX)
 		self.magnet_fixed = np.dot(self.rotXY,self.magnet)
-		self.orientation[2] = atan2(-self.magnet_fixed[1],self.magnet_fixed[0])
-
-		self.state.setOrientation(self.orientation)
-
-		print(str(degrees(self.orientation[0]))+" "+str(degrees(self.orientation[1]))+" "+str(degrees(self.orientation[2])))
+		self.orientation_g[2] = atan2(-self.magnet_fixed[1],self.magnet_fixed[0])
 
 
 	#Calc rotation matrix from orientation
