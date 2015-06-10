@@ -61,8 +61,8 @@ if __name__ == '__main__':
 	#Mqtt
 	username = 'admin'
 	password = 'password'
-	host = 'vps01.t-spots.jp'
-	port = 61713
+	host = ''
+	port = 61613
 
 	#Mqtt connect
 	client = mqtt.Client(client_id="PyMain", clean_session=True, protocol=mqtt.MQTTv311)

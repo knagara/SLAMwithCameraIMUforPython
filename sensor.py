@@ -25,7 +25,7 @@ class Sensor:
 		#state.py
 		self.state = _state
 		#variables
-		self.isFirstTime = true
+		self.isFirstTime = True
 		self.accel = np.array([])
 		self.gravity = np.array([])
 		self.magnet = np.array([])
@@ -54,7 +54,7 @@ class Sensor:
 		#state.py
 		self.state.init()
 		#variables
-		self.isFirstTime = true
+		self.isFirstTime = True
 		self.accel = np.array([])
 		self.gravity = np.array([])
 		self.magnet = np.array([])
@@ -99,7 +99,7 @@ class Sensor:
 		self.calcGlobalAcceleration()
 		self.state.localization()
 		if(isFirstTime):
-			isFirstTime = false
+			isFirstTime = False
 
 
 	#Calc orientation
