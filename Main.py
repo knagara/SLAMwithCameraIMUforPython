@@ -58,11 +58,18 @@ if __name__ == '__main__':
 	#acceleration of device
 	a = np.array([0.0,0.0,0.0])
 
+	#Read server conf file
+	f = open('../server.conf', 'r')
+	for line in f:
+		serverconf = line
+	f.close()
+
 	#Mqtt
-	username = 'admin'
-	password = 'password'
-	host = ''
-	port = 61613
+	conf = serverconf.split('&')
+	host = conf[0]
+	port = int(conf[1])
+	username = conf[2]
+	password = conf[3]
 
 	#Mqtt connect
 	client = mqtt.Client(client_id="PyMain", clean_session=True, protocol=mqtt.MQTTv311)
