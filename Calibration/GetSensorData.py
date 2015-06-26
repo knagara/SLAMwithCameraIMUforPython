@@ -71,11 +71,18 @@ if __name__ == '__main__':
 	magnet = np.array([])
 	orientation = np.array([])
 
+	#Read server conf file
+	f = open('../../server.conf', 'r')
+	for line in f:
+		serverconf = line
+	f.close()
+
 	#Mqtt
-	username = 'admin'
-	password = 'password'
-	host = 'vps01.t-spots.jp'
-	port = 61713
+	conf = serverconf.split('&')
+	host = conf[0]
+	port = int(conf[1])
+	username = conf[2]
+	password = conf[3]
 
 	#Mqtt connect
 	client = mqtt.Client(client_id="GetSensorData", clean_session=True, protocol=mqtt.MQTTv311)

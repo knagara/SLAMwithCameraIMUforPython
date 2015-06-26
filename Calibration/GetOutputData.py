@@ -9,6 +9,25 @@ import sys
 import numpy as np
 import paho.mqtt.client as mqtt
 
+def init():	
+	global isFirst, time, isFirstV, timeV, isFirstAll, timeAll
+	global accel, velocity, gravity, gyro, magnet, ori, position, orientation
+	
+	isFirst = True
+	time = 0
+	isFirstV = True
+	timeV = 0
+	isFirstAll = True
+	timeAll = 0
+	accel = np.array([])
+	velocity = np.array([])
+	gravity = np.array([])
+	gyro = np.array([])
+	magnet = np.array([])
+	ori = np.array([])
+	position = np.array([])
+	orientation = np.array([])
+
 
 #This method is called when mqtt is connected.
 def on_connect(client, userdata, flags, rc):
@@ -90,7 +109,8 @@ def on_message(client, userdata, msg):
 		np.savetxt('./output/velocity.csv', velocity, delimiter=',')
 		np.savetxt('./output/position.csv', position, delimiter=',')
 		np.savetxt('./output/orientation.csv', orientation, delimiter=',')
-		sys.exit()
+		print("stop")
+		init()
 
 
 #Main method
