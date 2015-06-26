@@ -14,10 +14,9 @@ def execKFSimple(Y, mu0, Sigma0, A, C, Q, R):
     Parameters
     ==========
     - Y : 観測列
-    - U : 入力列
     - mu0 : 初期状態推定値
     - Sigma0 : 初期誤差共分散行列
-    - A, B, C, Q, R : カルマンフィルタの係数
+    - A, C, Q, R : カルマンフィルタの係数
 
     Returns
     =======

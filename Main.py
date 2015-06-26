@@ -23,6 +23,7 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
 	global sensor, x, a
 
+
 	data = str(msg.payload).split('&')
 	#Append data to the array
 	if(str(msg.topic) == "SLAM/input/all"):
@@ -42,6 +43,8 @@ def on_message(client, userdata, msg):
 		print("stop")
 		client.publish("SLAM/output/stop","true")
 		sensor.init()
+
+
 
 
 #Main method

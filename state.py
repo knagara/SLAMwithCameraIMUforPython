@@ -38,7 +38,6 @@ class State:
 		self.a = np.array([0.0,0.0,0.0])
 		self.a1 = np.array([0.0,0.0,0.0])
 		self.orientation = np.array([0.0,0.0,0.0])
-		self.orientation1 = np.array([0.0,0.0,0.0])
 
 
 	def init(self):
@@ -52,7 +51,6 @@ class State:
 		self.a = np.array([0.0,0.0,0.0])
 		self.a1 = np.array([0.0,0.0,0.0])
 		self.orientation = np.array([0.0,0.0,0.0])
-		self.orientation1 = np.array([0.0,0.0,0.0])
 
 
 	def setTime(self,time):
@@ -65,7 +63,6 @@ class State:
 		self.a = accel
 
 	def setOrientation(self,_orientation):
-		self.orientation1 = self.orientation
 		self.orientation = _orientation
 
 	def getPosition(self):
@@ -79,9 +76,6 @@ class State:
 
 	def getOrientation(self):
 		return self.orientation
-
-	def getOrientation1(self):
-		return self.orientation1
 
 	def getTimeDelta(self):
 		return (self.t - self.t1)

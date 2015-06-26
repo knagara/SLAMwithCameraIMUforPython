@@ -79,6 +79,7 @@ class Sensor:
 		self.rot_ = np.identity(3)
 
 
+
 	#Set new data
 	def setData(self,data):
 		#set time
@@ -88,7 +89,7 @@ class Sensor:
 		self.accel = np.array([float(data[1]),float(data[2]),float(data[3])])
 		self.gravity = np.array([-float(data[4]),-float(data[5]),-float(data[6])])
 		self.magnet = np.array([float(data[7]),float(data[8]),float(data[9])])
-		self.gyro = np.array([float(data[10]),float(data[11]),float(data[12])])
+		self.gyro = np.array([float(data[10]),float(data[11]),-float(data[12])])
 
 
 	#Execute all functions
@@ -102,13 +103,41 @@ class Sensor:
 			self.isFirstTime = False
 
 
+	#Calc orientation
+	def calcOrientation(self):
+		self.calcOrientationByGravity()
+		self.calcOrientationByGyro()
+
+		self.orientation = self.orientation_g
+
+		#set orientation to state class
+		self.state.setOrientation(self.orientation)
+
+		#print(str(degrees(self.orientation[0]))+" "+str(degrees(self.orientation[1]))+" "+str(degrees(self.orientation[2])))
+		#print(str(degrees(self.orientation_g[0]))+" "+str(degrees(self.orientation_g[1]))+" "+str(degrees(self.orientation_g[2])))
+		#print(str(degrees(self.orientation_gyro[0]))+" "+str(degrees(self.orientation_gyro[1]))+" "+str(degrees(self.orientation_gyro[2])))
+		print(str(degrees(self.orientation_g[0]))+" "+str(degrees(self.orientation_g[1]))+" "+str(degrees(self.orientation_g[2]))+" "+str(degrees(self.orientation_gyro[0]))+" "+str(degrees(self.orientation_gyro[1]))+" "+str(degrees(self.orientation_gyro[2])))
+
+
 	#Calc orientation by using gyro
 	def calcOrientationByGyro(self):
 		if(self.isFirstTime):
 			self.orientation_gyro = self.orientation_g
 		else:
 			t = self.state.getTimeDelta()
-			self.orientation_gyro = self.state.getOrientation1() + self.gyro * t
+			self.orientation_gyro = self.orientation_gyro + self.gyro * t
+			if(self.orientation_gyro[0]>=pi):
+				self.orientation_gyro[0] -= pi*2.0
+			if(self.orientation_gyro[1]>=pi):
+				self.orientation_gyro[1] -= pi*2.0
+			if(self.orientation_gyro[2]>=pi):
+				self.orientation_gyro[2] -= pi*2.0
+			if(self.orientation_gyro[0]<-pi):
+				self.orientation_gyro[0] += pi*2.0
+			if(self.orientation_gyro[1]<-pi):
+				self.orientation_gyro[1] += pi*2.0
+			if(self.orientation_gyro[2]<-pi):
+				self.orientation_gyro[2] += pi*2.0
 
 
 	#Calc orientation by using gravity and magnet
@@ -130,22 +159,6 @@ class Sensor:
 		self.rotXY = np.dot(self.rotY,self.rotX)
 		self.magnet_fixed = np.dot(self.rotXY,self.magnet)
 		self.orientation_g[2] = atan2(-self.magnet_fixed[1],self.magnet_fixed[0])
-
-
-	#Calc orientation
-	def calcOrientation(self):
-		self.calcOrientationByGravity()
-		self.calcOrientationByGyro()
-
-		self.orientation = self.orientation_g
-
-		#set orientation to state class
-		self.state.setOrientation(self.orientation)
-
-		#print(str(degrees(self.orientation[0]))+" "+str(degrees(self.orientation[1]))+" "+str(degrees(self.orientation[2])))
-		print(str(degrees(self.orientation_g[0]))+" "+str(degrees(self.orientation_g[1]))+" "+str(degrees(self.orientation_g[2])))
-		print(str(degrees(self.orientation_gyro[0]))+" "+str(degrees(self.orientation_gyro[1]))+" "+str(degrees(self.orientation_gyro[2])))
-		print("-----------------------------------")
 
 
 	#Calc rotation matrix from orientation
