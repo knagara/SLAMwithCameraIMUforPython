@@ -27,6 +27,7 @@ def on_message(client, userdata, msg):
 	data = str(msg.payload).split('&')
 	#Append data to the array
 	if(str(msg.topic) == "SLAM/input/all"):
+		#print("-----")
 		sensor.setData(data)
 		sensor.processData()
 		x = state.getPosition()
@@ -34,6 +35,7 @@ def on_message(client, userdata, msg):
 		a = state.getAcceleration()
 		ori = state.getOrientation()
 		ori_g = sensor.orientation_gyro
+		print(state.t)
 		
 		#print(x)
 		client.publish("SLAM/output/accel",str(a[0])+"&"+str(a[1])+"&"+str(a[2]))
@@ -42,6 +44,7 @@ def on_message(client, userdata, msg):
 		#client.publish("SLAM/output/orientation",str(ori[0])+"&"+str(ori[1])+"&"+str(ori[2]))
 		#client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(ori[0])+"&"+str(ori[1])+"&"+str(ori[2]))
 		client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(ori[0])+"&"+str(ori[1])+"&"+str(ori[2])+"&"+str(ori_g[0])+"&"+str(ori_g[1])+"&"+str(ori_g[2]))
+		#print(".")
 	elif(str(msg.topic) == "SLAM/input/stop"):
 		print("stop")
 		client.publish("SLAM/output/stop","true")

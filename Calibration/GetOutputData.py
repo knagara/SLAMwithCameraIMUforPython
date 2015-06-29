@@ -147,7 +147,7 @@ if __name__ == '__main__':
 	password = conf[3]
 
 	#Mqtt connect
-	client = mqtt.Client(client_id="GetSensorData", clean_session=True, protocol=mqtt.MQTTv311)
+	client = mqtt.Client(client_id="GetOutputData", clean_session=True, protocol=mqtt.MQTTv311)
 	client.on_connect = on_connect
 	client.on_message = on_message
 	client.username_pw_set(username, password=password)

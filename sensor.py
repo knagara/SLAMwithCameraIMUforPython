@@ -116,7 +116,7 @@ class Sensor:
 		#print(str(degrees(self.orientation[0]))+" "+str(degrees(self.orientation[1]))+" "+str(degrees(self.orientation[2])))
 		#print(str(degrees(self.orientation_g[0]))+" "+str(degrees(self.orientation_g[1]))+" "+str(degrees(self.orientation_g[2])))
 		#print(str(degrees(self.orientation_gyro[0]))+" "+str(degrees(self.orientation_gyro[1]))+" "+str(degrees(self.orientation_gyro[2])))
-		print(str(degrees(self.orientation_g[0]))+" "+str(degrees(self.orientation_g[1]))+" "+str(degrees(self.orientation_g[2]))+" "+str(degrees(self.orientation_gyro[0]))+" "+str(degrees(self.orientation_gyro[1]))+" "+str(degrees(self.orientation_gyro[2])))
+		#print(str(degrees(self.orientation_g[0]))+" "+str(degrees(self.orientation_g[1]))+" "+str(degrees(self.orientation_g[2]))+" "+str(degrees(self.orientation_gyro[0]))+" "+str(degrees(self.orientation_gyro[1]))+" "+str(degrees(self.orientation_gyro[2])))
 
 
 	#Calc orientation by using gyro
