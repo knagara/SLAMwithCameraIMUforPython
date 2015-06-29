@@ -34,6 +34,7 @@ def on_message(client, userdata, msg):
 		a = state.getAcceleration()
 		ori = state.getOrientation()
 		ori_g = sensor.orientation_gyro
+		
 		#print(x)
 		client.publish("SLAM/output/accel",str(a[0])+"&"+str(a[1])+"&"+str(a[2]))
 		client.publish("SLAM/output/velocity",str(v[0])+"&"+str(v[1])+"&"+str(v[2]))
