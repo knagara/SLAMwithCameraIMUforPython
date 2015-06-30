@@ -10,6 +10,22 @@ import numpy as np
 import paho.mqtt.client as mqtt
 
 
+def init():
+	global isFirst
+	global time
+	global accel, linear_accel, gravity, gyro, magnet, orientation
+	
+	#global variables
+	isFirst = True
+	time = 0
+	accel = np.array([])
+	linear_accel = np.array([])
+	gravity = np.array([])
+	gyro = np.array([])
+	magnet = np.array([])
+	orientation = np.array([])
+
+
 #This method is called when mqtt is connected.
 def on_connect(client, userdata, flags, rc):
     print('Connected with result code '+str(rc))
@@ -55,7 +71,9 @@ def on_message(client, userdata, msg):
 		#np.savetxt('./data/gyro.csv', gyro, delimiter=',')
 		#np.savetxt('./data/magnet.csv', magnet, delimiter=',')
 		#np.savetxt('./data/orientation.csv', orientation, delimiter=',')
-		sys.exit()
+		#sys.exit()
+		print("stop")
+		init()
 
 
 #Main method

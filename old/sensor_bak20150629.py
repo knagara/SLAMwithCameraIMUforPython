@@ -9,6 +9,7 @@ methods:
 	processData()
 	calcOrientation()
 	calcRotationMatrix()
+	calibrateAcceleration()
 	calcGlobalAcceleration()
 	init()
 """
@@ -95,6 +96,7 @@ class Sensor:
 	def processData(self):
 		self.calcOrientation()
 		self.calcRotationMatrix()
+		#self.calibrateAcceleration()
 		self.calcGlobalAcceleration()
 		self.state.localization()
 		if(self.isFirstTime):
@@ -106,7 +108,7 @@ class Sensor:
 		self.calcOrientationByGravity()
 		self.calcOrientationByGyro()
 
-		self.orientation = self.orientation_gyro
+		self.orientation = self.orientation_g
 
 		#set orientation to state class
 		self.state.setOrientation(self.orientation)
@@ -166,6 +168,23 @@ class Sensor:
 		cv.Rodrigues(np.array((0.0,self.orientation[1],0.0)),self.rotY_)
 		cv.Rodrigues(np.array((0.0,0.0,self.orientation[2])),self.rotZ_)
 		self.rot_ = np.dot(self.rotZ_,np.dot(self.rotY_,self.rotX_))
+
+
+	#Calibrate acceleration
+	def calibrateAcceleration(self):
+		#angle between gravity and device
+		self.cosx = self.rot_[0,0]
+		self.cosy = self.rot_[1,1]
+		self.cosz = self.rot_[2,2]
+
+		#Calc offset
+		if(self.cosz<0):
+			self.offset_[2] = -(self.offset1[2] * self.cosz)
+		else:
+			self.offset_[2] = self.offset2[2] * self.cosz
+
+		#Add offset
+		self.accel = self.accel + self.offset_
 
 
 	#Calc accel in global coordinates by using orientation
