@@ -17,6 +17,7 @@ import sys
 from math import *
 import cv2 as cv
 import numpy as np
+import Util
 
 class Sensor:
 
@@ -147,21 +148,23 @@ class Sensor:
 			sign = -1.0
 		self.orientation_g[1] = atan2(-self.gravity[0],sign*hypot(self.gravity[1],self.gravity[2]))
 		#z yaw
-		cv.Rodrigues(np.array((self.orientation_g[0],0.0,0.0)),self.rotX)
-		cv.Rodrigues(np.array((0.0,self.orientation_g[1],0.0)),self.rotY)
+		self.rotX = Util.rotationMatrixX(self.orientation_g[0])
+		self.rotY = Util.rotationMatrixY(self.orientation_g[1])
 		self.rotXY = np.dot(self.rotY,self.rotX)
+		print(self.magnet)
 		self.magnet_fixed = np.dot(self.rotXY,self.magnet)
+		print(self.magnet_fixed)
 		self.orientation_g[2] = atan2(-self.magnet_fixed[1],self.magnet_fixed[0])
 
 
 	#Calc rotation matrix from orientation
 	def calcRotationMatrix(self):
 		#Rotation matrix R(Z)R(Y)R(X)
-		cv.Rodrigues(np.array((self.orientation[0],0.0,0.0)),self.rotX_)
-		cv.Rodrigues(np.array((0.0,self.orientation[1],0.0)),self.rotY_)
-		cv.Rodrigues(np.array((0.0,0.0,self.orientation[2])),self.rotZ_)
+		self.rotX_ = Util.rotationMatrixX(self.orientation[0])
+		self.rotY_ = Util.rotationMatrixY(self.orientation[1])
+		self.rotZ_ = Util.rotationMatrixZ(self.orientation[2])
 		self.rot_ = np.dot(self.rotZ_,np.dot(self.rotY_,self.rotX_))
-
+		
 
 	#Calc accel in global coordinates by using orientation
 	def calcGlobalAcceleration(self):
