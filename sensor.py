@@ -107,7 +107,7 @@ class Sensor:
 		self.calcOrientationByGravity()
 		self.calcOrientationByGyro()
 
-		self.orientation = self.orientation_gyro
+		self.orientation = self.orientation_g
 
 		#set orientation to state class
 		self.state.setOrientation(self.orientation)
@@ -142,11 +142,12 @@ class Sensor:
 		#x roll
 		self.orientation_g[0] = atan2(self.gravity[1],self.gravity[2])
 		#y pitch
+		self.orientation_g[1] = atan2(-self.gravity[0],hypot(self.gravity[1],self.gravity[2]))
 		#sign(+ or -) is decided here
-		sign = 1.0
-		if(self.gravity[2]<0): #decided by z axis
-			sign = -1.0
-		self.orientation_g[1] = atan2(-self.gravity[0],sign*hypot(self.gravity[1],self.gravity[2]))
+		#sign = 1.0
+		#if(self.gravity[2]<0): #decided by z axis
+		#	sign = -1.0
+		#self.orientation_g[1] = atan2(-self.gravity[0],sign*hypot(self.gravity[1],self.gravity[2]))
 		#z yaw
 		self.rotX = Util.rotationMatrixX(self.orientation_g[0])
 		self.rotY = Util.rotationMatrixY(self.orientation_g[1])

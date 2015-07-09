@@ -75,8 +75,8 @@ def appendDataAll(data):
 
 	timeAll = timeAll + 1
 	position0 = np.array([timeAll,float(data[0]),float(data[1]),float(data[2])])
-	orientation0 = np.array([timeAll,float(data[3]),float(data[4]),float(data[5])])
-	#orientation0 = np.array([timeAll,float(data[3]),float(data[4]),float(data[5]),float(data[6]),float(data[7]),float(data[8])])
+	#orientation0 = np.array([timeAll,float(data[3]),float(data[4]),float(data[5])])
+	orientation0 = np.array([timeAll,float(data[3]),float(data[4]),float(data[5]),float(data[6]),float(data[7]),float(data[8])])
 
 	if(isFirstAll):
 		position = position0
@@ -85,8 +85,6 @@ def appendDataAll(data):
 	else:
 		position = np.c_[position, position0]
 		orientation = np.c_[orientation, orientation0]
-
-	#print(str(orientation0[1])+" "+str(orientation0[2])+" "+str(orientation0[3]))
 
 
 #This method is called when message is arrived.
