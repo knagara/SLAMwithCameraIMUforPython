@@ -96,6 +96,7 @@ class Sensor:
 	def processData(self):
 		self.calcOrientation()
 		self.calcRotationMatrix()
+		self.removeCentrifugalAndTangentialAccel()
 		self.calcGlobalAcceleration()
 		self.state.localization()
 		if(self.isFirstTime):
@@ -163,6 +164,13 @@ class Sensor:
 		self.rotY_ = Util.rotationMatrixY(self.orientation[1])
 		self.rotZ_ = Util.rotationMatrixZ(self.orientation[2])
 		self.rot_ = np.dot(self.rotZ_,np.dot(self.rotY_,self.rotX_))
+		
+		
+	#Remove Centrifugal and Tangential Accel
+	#see also "Studies on Orientation Measurement in Sports Using Inertial and Magnetic Field Sensors"
+	#         https://www.jstage.jst.go.jp/article/sposun/22/2/22_255/_pdf
+	def removeCentrifugalAndTangentialAccel(self):
+		pass
 		
 
 	#Calc accel in global coordinates by using orientation
