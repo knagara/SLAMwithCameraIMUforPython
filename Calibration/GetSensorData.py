@@ -67,7 +67,7 @@ def on_message(client, userdata, msg):
 	if(str(msg.topic) == "SLAM/input/all"):
 		appendData(data)
 	elif(str(msg.topic) == "SLAM/input/stop"):
-		np.savetxt('./data/output.csv', accel, delimiter=',')
+		np.savetxt('./data/data.csv', accel, delimiter=',')
 		#np.savetxt('./data/gravity.csv', gravity, delimiter=',')
 		#np.savetxt('./data/gyro.csv', gyro, delimiter=',')
 		#np.savetxt('./data/magnet.csv', magnet, delimiter=',')

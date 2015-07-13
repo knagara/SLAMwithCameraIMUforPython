@@ -30,7 +30,8 @@ def on_message(client, userdata, msg):
 		v = state.getVelocity()
 		a = state.getAcceleration()
 		ori = state.getOrientation()
-		ori_g = sensor.orientation_gyro
+		#ori_g = sensor.orientation_gyro
+		ori_g = sensor.gyro
 
 		print "*",
 		
