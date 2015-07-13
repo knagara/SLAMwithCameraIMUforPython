@@ -31,6 +31,7 @@ class State:
 		self.t = 0
 		self.t1 = 0
 		self.t2 = 0
+		self.t3 = 0
 		self.x = np.array([0.0,0.0,0.0])
 		self.x1 = np.array([0.0,0.0,0.0])
 		self.v = np.array([0.0,0.0,0.0])
@@ -44,6 +45,7 @@ class State:
 		self.t = 0
 		self.t1 = 0
 		self.t2 = 0
+		self.t3 = 0
 		self.x = np.array([0.0,0.0,0.0])
 		self.x1 = np.array([0.0,0.0,0.0])
 		self.v = np.array([0.0,0.0,0.0])
@@ -54,6 +56,7 @@ class State:
 
 
 	def setTime(self,time):
+		self.t3 = self.t2
 		self.t2 = self.t1
 		self.t1 = self.t
 		self.t = time
@@ -84,9 +87,9 @@ class State:
 	#estimate position by simple Eq.
 	def simpleLocalization(self):
 
-		if(self.t1 == 0):
+		if(self.t2 == 0):
 			pass
-		elif(self.t2 == 0):
+		elif(self.t3 == 0):
 			self.v = (self.t - self.t1)*self.a1
 		else:
 			self.v1 = self.v

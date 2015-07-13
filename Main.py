@@ -25,8 +25,7 @@ def on_message(client, userdata, msg):
 	data = str(msg.payload).split('&')
 	#Append data to the array
 	if(str(msg.topic) == "SLAM/input/all"):
-		sensor.setData(data)
-		sensor.processData()
+		sensor.processData(data)
 		x = state.getPosition()
 		v = state.getVelocity()
 		a = state.getAcceleration()

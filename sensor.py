@@ -48,6 +48,8 @@ class Sensor:
 		self.rotY_ = np.identity(3)
 		self.rotZ_ = np.identity(3)
 		self.rot_ = np.identity(3)
+		self.gyro1 = np.array([])
+		self.r = np.array([0.0,0.03,0.0])
 
 
 	def init(self):
@@ -77,28 +79,31 @@ class Sensor:
 		self.rotY_ = np.identity(3)
 		self.rotZ_ = np.identity(3)
 		self.rot_ = np.identity(3)
+		self.gyro1 = np.array([])
+		self.r = np.array([0.0,0.03,0.0])
 
 
 
-	#Set new data
-	def setData(self,data):
-		#set time
-		self.state.setTime(float(long(data[0]) / 1000.0))
+	#Set new data and Execute all functions
+	def processData(self,data):
 
-		#set sensor data
+		if(self.isFirstTime==False):
+			self.state.setTime(float(long(data[0]) / 1000.0))
+			self.gyro1 = self.gyro
+			
 		self.accel = np.array([float(data[1]),float(data[2]),float(data[3])])
 		self.gravity = np.array([-float(data[4]),-float(data[5]),-float(data[6])])
 		self.magnet = np.array([float(data[7]),float(data[8]),float(data[9])])
-		self.gyro = np.array([float(data[10])+0.01,float(data[11]),float(data[12])-0.017]) #add offset
-
-
-	#Execute all functions
-	def processData(self):
+		self.gyro = np.array([float(data[10])+0.0,float(data[11]),float(data[12])-0.0]) #add offset
+			
 		self.calcOrientation()
 		self.calcRotationMatrix()
-		self.removeCentrifugalAndTangentialAccel()
-		self.calcGlobalAcceleration()
-		self.state.localization()
+		
+		if(self.isFirstTime==False):
+			self.removeCentrifugalAndTangentialAccel()
+			self.calcGlobalAcceleration()
+			self.state.localization()
+			
 		if(self.isFirstTime):
 			self.isFirstTime = False
 
@@ -170,7 +175,14 @@ class Sensor:
 	#see also "Studies on Orientation Measurement in Sports Using Inertial and Magnetic Field Sensors"
 	#         https://www.jstage.jst.go.jp/article/sposun/22/2/22_255/_pdf
 	def removeCentrifugalAndTangentialAccel(self):
-		pass
+		#Angular velocity
+		wv = self.gyro
+		#Angular acceleration
+		wa = (self.gyro - self.gyro1)/self.state.getTimeDelta()
+		
+		# a = a - wv*(wv*r) - wa*r
+		self.accel = self.accel - np.cross(wv,np.cross(wv,self.r)) - np.cross(wa,self.r)
+		
 		
 
 	#Calc accel in global coordinates by using orientation
