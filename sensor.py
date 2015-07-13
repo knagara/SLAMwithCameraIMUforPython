@@ -94,7 +94,7 @@ class Sensor:
 		self.accel = np.array([float(data[1]),float(data[2]),float(data[3])])
 		self.gravity = np.array([-float(data[4]),-float(data[5]),-float(data[6])])
 		self.magnet = np.array([float(data[7]),float(data[8]),float(data[9])])
-		self.gyro = np.array([float(data[10])+0.0,float(data[11]),float(data[12])-0.0]) #add offset
+		self.gyro = np.array([float(data[10])+0.016076385,float(data[11])-0.002585781,float(data[12])-0.019482931]) #add offset
 			
 		self.calcOrientation()
 		self.calcRotationMatrix()
