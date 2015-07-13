@@ -37,9 +37,6 @@ class Sensor:
 		self.cosx = 0.0
 		self.cosy = 0.0
 		self.cosz = 0.0
-		self.offset1 = np.array([0.0,0.0,0.63776811])
-		self.offset2 = np.array([0.0,0.0,1.15589317])
-		self.offset_ = np.array([0.0,0.0,0.0])
 		self.rotX = np.identity(3)
 		self.rotY = np.identity(3)
 		self.rotXY = np.identity(3)
@@ -68,9 +65,6 @@ class Sensor:
 		self.cosx = 0.0
 		self.cosy = 0.0
 		self.cosz = 0.0
-		self.offset1 = np.array([0.0,0.0,0.63776811])
-		self.offset2 = np.array([0.0,0.0,0.51812505])
-		self.offset_ = np.array([0.0,0.0,0.0])
 		self.rotX = np.identity(3)
 		self.rotY = np.identity(3)
 		self.rotXY = np.identity(3)
