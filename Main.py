@@ -28,17 +28,20 @@ def on_message(client, userdata, msg):
 		sensor.processData(data)
 		x = state.getPosition()
 		v = state.getVelocity()
-		a = state.getAcceleration()
+		#a = state.getAcceleration()
+		a = sensor.accel
 		ori = state.getOrientation()
-		#ori_g = sensor.orientation_gyro
-		ori_g = sensor.gyro
+		a_ = sensor.accel_
 
 		print "*",
 		
 		client.publish("SLAM/output/accel",str(a[0])+"&"+str(a[1])+"&"+str(a[2]))
+		#client.publish("SLAM/output/accel",str(a[0])+"&"+str(a[1])+"&"+str(a[2])+"&"+str(a_[0])+"&"+str(a_[1])+"&"+str(a_[2]))
+		
 		client.publish("SLAM/output/velocity",str(v[0])+"&"+str(v[1])+"&"+str(v[2]))
 		#client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(ori[0])+"&"+str(ori[1])+"&"+str(ori[2]))
-		client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(ori[0])+"&"+str(ori[1])+"&"+str(ori[2])+"&"+str(ori_g[0])+"&"+str(ori_g[1])+"&"+str(ori_g[2]))
+		client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(ori[0])+"&"+str(ori[1])+"&"+str(ori[2])+"&"+str(a_[0])+"&"+str(a_[1])+"&"+str(a_[2]))
+		
 	elif(str(msg.topic) == "SLAM/input/stop"):
 		print("stop")
 		client.publish("SLAM/output/stop","true")

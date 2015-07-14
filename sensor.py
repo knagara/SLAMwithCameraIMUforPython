@@ -46,7 +46,8 @@ class Sensor:
 		self.rotZ_ = np.identity(3)
 		self.rot_ = np.identity(3)
 		self.gyro1 = np.array([])
-		self.r = np.array([0.0,0.03,0.0])
+		self.r = np.array([0.0,1.0,0.0])
+		self.accel_ = np.array([0.0,0.0,0.0])
 
 
 	def init(self):
@@ -74,7 +75,8 @@ class Sensor:
 		self.rotZ_ = np.identity(3)
 		self.rot_ = np.identity(3)
 		self.gyro1 = np.array([])
-		self.r = np.array([0.0,0.03,0.0])
+		self.r = np.array([0.0,1.0,0.0])
+		self.accel_ = np.array([0.0,0.0,0.0])
 
 
 
@@ -88,14 +90,14 @@ class Sensor:
 		self.accel = np.array([float(data[1]),float(data[2]),float(data[3])])
 		self.gravity = np.array([-float(data[4]),-float(data[5]),-float(data[6])])
 		self.magnet = np.array([float(data[7]),float(data[8]),float(data[9])])
-		self.gyro = np.array([float(data[10])+0.017453298,float(data[11]),float(data[12])-0.017453283]) #add offset
+		self.gyro = np.array([float(data[10])+0.017453283,float(data[11]),float(data[12])-0.017453283]) #add offset
 			
 		self.calcOrientation()
 		self.calcRotationMatrix()
 		
 		if(self.isFirstTime==False):
 			self.removeCentrifugalAndTangentialAccel()
-			self.calcGlobalAcceleration()
+			#self.calcGlobalAcceleration()
 			self.state.localization()
 			
 		if(self.isFirstTime):
@@ -176,6 +178,8 @@ class Sensor:
 		
 		# a = a - wv*(wv*r) - wa*r
 		self.accel = self.accel - np.cross(wv,np.cross(wv,self.r)) - np.cross(wa,self.r)
+		
+		self.accel_ = self.accel
 		
 		
 
