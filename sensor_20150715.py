@@ -18,7 +18,6 @@ from math import *
 import cv2 as cv
 import numpy as np
 import Util
-import KF
 
 class Sensor:
 
@@ -48,10 +47,6 @@ class Sensor:
 		self.rot_ = np.identity(3)
 		self.gyro1 = np.array([])
 		self.r = np.array([0.0,0.0,0.0])
-		self.I = np.identity(3)
-		self.P = np.array([0.0,0.0,0.0]) # covariance matrix of KF for orientation
-		self.Q = np.diag([0.01,0.01,0.01]) # noise of KF for orientation
-		self.R = np.diag([0.1,0.1,0.1]) # noise of KF for orientation
 
 
 	def init(self):
@@ -80,10 +75,6 @@ class Sensor:
 		self.rot_ = np.identity(3)
 		self.gyro1 = np.array([])
 		self.r = np.array([0.0,0.0,0.0])
-		self.I = np.identity(3)
-		self.P = np.array([0.0,0.0,0.0]) # covariance matrix of KF for orientation
-		self.Q = np.diag([0.01,0.01,0.01]) # noise of KF for orientation
-		self.R = np.diag([0.1,0.1,0.1]) # noise of KF for orientation
 
 
 
@@ -115,32 +106,12 @@ class Sensor:
 	#Calc orientation
 	def calcOrientation(self):
 		self.calcOrientationByGravity()
-
-		if(self.isFirstTime):
-			self.orientation = self.orientation_g
-		else:
-			t = self.state.getTimeDelta()
-			matrixGyro2Euler = Util.matrixGyro2Euler(self.orientation[0],self.orientation[1]) * t
-
-			#Kalman Filter
-			resultKF = KF.execKF1(self.orientation_g, self.gyro, self.orientation, self.P, self.I, matrixGyro2Euler, self.I, self.Q, self.R)
-			self.orientation = resultKF[0]
-			self.P = resultKF[1]
-
-			if(self.orientation[0]>=pi):
-				self.orientation[0] -= pi*2.0
-			if(self.orientation[1]>=pi):
-				self.orientation[1] -= pi*2.0
-			if(self.orientation[2]>=pi):
-				self.orientation[2] -= pi*2.0
-			if(self.orientation[0]<-pi):
-				self.orientation[0] += pi*2.0
-			if(self.orientation[1]<-pi):
-				self.orientation[1] += pi*2.0
-			if(self.orientation[2]<-pi):
-				self.orientation[2] += pi*2.0
-
 		self.calcOrientationByGyro()
+
+		self.orientation = self.orientation_g
+		#self.orientation = self.orientation_gyro
+
+		#set orientation to state class
 		self.state.setOrientation(self.orientation)
 
 

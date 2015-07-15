@@ -65,15 +65,15 @@ def execKF1(Y, U, mu0, Sigma0, A, B, C, Q, R):
     Sigma = Sigma0 # 初期誤差共分散行列
 
     # 推定
-    mu_ = A * mu + B * U
-    Sigma_ = Q + A * Sigma * A.T
+    mu_ = A.dot(mu) + B.dot(U)
+    Sigma_ = Q + A.dot(Sigma.dot(A.T))
 
     # 更新
-    yi = Y - C * mu_
-    S = C * Sigma_ * C.T + R
-    K = Sigma_ * C.T * S.I
-    mu = mu_ + K * yi
-    Sigma = Sigma_ - K * C * Sigma_
+    yi = Y - C.dot(mu_)
+    S = C.dot(Sigma_.dot(C.T)) + R
+    K = Sigma_.dot(C.T.dot(np.linalg.inv(S)))
+    mu = mu_ + K.dot(yi)
+    Sigma = Sigma_ - K.dot(C.dot(Sigma_))
 
     return (mu, Sigma)
 
