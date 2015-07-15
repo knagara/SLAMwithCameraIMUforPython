@@ -7,9 +7,9 @@ import numpy as np
 def matrixGyro2Euler(x,y):
 	#回転行列
 	R = np.array([
-		[0, sin(x)/cos(y), cos(x)/cos(y)],
+		[1, sin(x)*tan(y), cos(x)*tan(y)],
 		[0, cos(x), -sin(x)],
-		[1, sin(x)*tan(y), cos(x)*tan(y)]
+		[0, sin(x)/cos(y), cos(x)/cos(y)]
 	])
 	return R
 

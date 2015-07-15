@@ -108,7 +108,7 @@ class Sensor:
 		self.calcOrientationByGravity()
 		self.calcOrientationByGyro()
 
-		self.orientation = self.orientation_g
+		self.orientation = self.orientation_gyro
 
 		#set orientation to state class
 		self.state.setOrientation(self.orientation)
@@ -120,7 +120,7 @@ class Sensor:
 			self.orientation_gyro = self.orientation_g
 		else:
 			t = self.state.getTimeDelta()
-			gyroEuler = np.dot(Util.matrixGyro2Euler(self.orientation_g[0],self.orientation_g[1]),self.gyro)
+			gyroEuler = np.dot(Util.matrixGyro2Euler(self.orientation_gyro[0],self.orientation_gyro[1]),self.gyro)
 			self.orientation_gyro = self.orientation_gyro + gyroEuler * t
 			if(self.orientation_gyro[0]>=pi):
 				self.orientation_gyro[0] -= pi*2.0
