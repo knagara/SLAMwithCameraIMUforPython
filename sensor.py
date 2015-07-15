@@ -46,8 +46,7 @@ class Sensor:
 		self.rotZ_ = np.identity(3)
 		self.rot_ = np.identity(3)
 		self.gyro1 = np.array([])
-		self.r = np.array([0.0,1.0,0.0])
-		self.accel_ = np.array([0.0,0.0,0.0])
+		self.r = np.array([0.0,0.0,0.0])
 
 
 	def init(self):
@@ -75,31 +74,31 @@ class Sensor:
 		self.rotZ_ = np.identity(3)
 		self.rot_ = np.identity(3)
 		self.gyro1 = np.array([])
-		self.r = np.array([0.0,1.0,0.0])
-		self.accel_ = np.array([0.0,0.0,0.0])
+		self.r = np.array([0.0,0.0,0.0])
 
 
 
 	#Set new data and Execute all functions
 	def processData(self,data):
 
+		self.state.setTime(float(long(data[0]) / 1000.0))
+
 		if(self.isFirstTime==False):
-			self.state.setTime(float(long(data[0]) / 1000.0))
 			self.gyro1 = self.gyro
-			
+
 		self.accel = np.array([float(data[1]),float(data[2]),float(data[3])])
 		self.gravity = np.array([-float(data[4]),-float(data[5]),-float(data[6])])
 		self.magnet = np.array([float(data[7]),float(data[8]),float(data[9])])
 		self.gyro = np.array([float(data[10])+0.017453283,float(data[11]),float(data[12])-0.017453283]) #add offset
-			
+
 		self.calcOrientation()
 		self.calcRotationMatrix()
-		
+
 		if(self.isFirstTime==False):
 			self.removeCentrifugalAndTangentialAccel()
-			#self.calcGlobalAcceleration()
+			self.calcGlobalAcceleration()
 			self.state.localization()
-			
+
 		if(self.isFirstTime):
 			self.isFirstTime = False
 
@@ -121,7 +120,8 @@ class Sensor:
 			self.orientation_gyro = self.orientation_g
 		else:
 			t = self.state.getTimeDelta()
-			self.orientation_gyro = self.orientation_gyro + self.gyro * t
+			gyroEuler = np.dot(Util.matrixGyro2Euler(self.orientation_g[0],self.orientation_g[1]),self.gyro)
+			self.orientation_gyro = self.orientation_gyro + gyroEuler * t
 			if(self.orientation_gyro[0]>=pi):
 				self.orientation_gyro[0] -= pi*2.0
 			if(self.orientation_gyro[1]>=pi):
@@ -165,8 +165,8 @@ class Sensor:
 		self.rotY_ = Util.rotationMatrixY(self.orientation[1])
 		self.rotZ_ = Util.rotationMatrixZ(self.orientation[2])
 		self.rot_ = np.dot(self.rotZ_,np.dot(self.rotY_,self.rotX_))
-		
-		
+
+
 	#Remove Centrifugal and Tangential Accel
 	#see also "Studies on Orientation Measurement in Sports Using Inertial and Magnetic Field Sensors"
 	#         https://www.jstage.jst.go.jp/article/sposun/22/2/22_255/_pdf
@@ -175,13 +175,16 @@ class Sensor:
 		wv = self.gyro
 		#Angular acceleration
 		wa = (self.gyro - self.gyro1)/self.state.getTimeDelta()
-		
-		# a = a - wv*(wv*r) - wa*r
-		self.accel = self.accel - np.cross(wv,np.cross(wv,self.r)) - np.cross(wa,self.r)
-		
-		self.accel_ = self.accel
-		
-		
+		#r
+		wn2 = pow(np.linalg.norm(wv),2) # norm of gyro vector
+		if(wn2 > 0.1):
+			self.r = np.cross(self.state.v,wv)/wn2
+			# a = a - wv*(wv*r) - wa*r
+			self.accel = self.accel - np.cross(wv,np.cross(wv,self.r)) - np.cross(wa,self.r)
+		else:
+			self.r = np.array([0.0,0.0,0.0])
+
+
 
 	#Calc accel in global coordinates by using orientation
 	def calcGlobalAcceleration(self):
