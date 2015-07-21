@@ -20,7 +20,7 @@ def init():
 
 #This method is called when mqtt is connected.
 def on_connect(client, userdata, flags, rc):
-    print('Connected with result code '+str(rc))
+    print('[GetOutputDataTemp] Connected with result code '+str(rc))
     client.subscribe("SLAM/output/#")
 
 
@@ -32,7 +32,8 @@ def appendData(data):
 
 	time = time + 1
 	#output0 = np.array([time,float(data[0]),float(data[1]),float(data[2])])
-	output0 = np.array([time,float(data[0]),float(data[1]),float(data[2]),float(data[3]),float(data[4]),float(data[5]),float(data[6]),float(data[7]),float(data[8])])
+	output0 = np.array([time,float(data[0]),float(data[1]),float(data[2]),float(data[3]),float(data[4]),float(data[5])])
+	#output0 = np.array([time,float(data[0]),float(data[1]),float(data[2]),float(data[3]),float(data[4]),float(data[5]),float(data[6]),float(data[7]),float(data[8])])
 
 	if(isFirst):
 		output = output0
@@ -55,7 +56,7 @@ def on_message(client, userdata, msg):
 		appendData(data)
 	elif(str(msg.topic) == "SLAM/output/stop"):
 		np.savetxt('./output/temp.csv', output, delimiter=',')
-		print("stop")
+		print("[GetOutputDataTemp] stop")
 		init()
 
 

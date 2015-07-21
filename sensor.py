@@ -50,8 +50,11 @@ class Sensor:
 		self.r = np.array([0.0,0.0,0.0])
 		self.I = np.identity(3)
 		self.P = np.array([0.0,0.0,0.0]) # covariance matrix of KF for orientation
-		self.Q = np.diag([0.01,0.01,0.01]) # noise of KF for orientation
-		self.R = np.diag([0.1,0.1,0.1]) # noise of KF for orientation
+		self.Q = np.diag([0.1,0.1,0.1]) # noise of KF for orientation
+		self.R = np.diag([0.01,0.01,0.01]) # noise of KF for orientation
+		self.centrifugal = np.array([0.0,0.0,0.0])
+		self.tangential = np.array([0.0,0.0,0.0])
+		self.angularAccel = np.array([0.0,0.0,0.0])
 
 
 	def init(self):
@@ -82,8 +85,11 @@ class Sensor:
 		self.r = np.array([0.0,0.0,0.0])
 		self.I = np.identity(3)
 		self.P = np.array([0.0,0.0,0.0]) # covariance matrix of KF for orientation
-		self.Q = np.diag([0.01,0.01,0.01]) # noise of KF for orientation
-		self.R = np.diag([0.1,0.1,0.1]) # noise of KF for orientation
+		self.Q = np.diag([0.1,0.1,0.1]) # noise of KF for orientation
+		self.R = np.diag([0.01,0.01,0.01]) # noise of KF for orientation
+		self.centrifugal = np.array([0.0,0.0,0.0])
+		self.tangential = np.array([0.0,0.0,0.0])
+		self.angularAccel = np.array([0.0,0.0,0.0])
 
 
 
@@ -207,12 +213,18 @@ class Sensor:
 		wa = (self.gyro - self.gyro1)/self.state.getTimeDelta()
 		#r
 		wn2 = pow(np.linalg.norm(wv),2) # norm of gyro vector
-		if(wn2 > 0.1):
+		if(wn2 > 0.01):
 			self.r = np.cross(self.state.v,wv)/wn2
 			# a = a - wv*(wv*r) - wa*r
-			self.accel = self.accel - np.cross(wv,np.cross(wv,self.r)) - np.cross(wa,self.r)
+			self.centrifugal = np.cross(wv,np.cross(wv,self.r))
+			self.tangential = np.cross(wa,self.r)
+			self.angularAccel = wa
+			self.accel = self.accel - self.centrifugal
+			#self.accel = self.accel - self.centrifugal - self.tangential
+			#self.accel = self.accel - np.cross(wv,np.cross(wv,self.r)) - np.cross(wa,self.r)
 		else:
 			self.r = np.array([0.0,0.0,0.0])
+			self.angularAccel = wa
 
 
 

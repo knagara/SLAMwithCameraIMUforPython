@@ -15,7 +15,7 @@ from state import State
 
 #This method is called when mqtt is connected.
 def on_connect(client, userdata, flags, rc):
-    print('Connected with result code '+str(rc))
+    print('[Main.py] Connected with result code '+str(rc))
     client.subscribe("SLAM/input/#")
 
 
@@ -32,9 +32,13 @@ def on_message(client, userdata, msg):
 		a = sensor.accel #
 		ori = state.getOrientation()
 		#temp
-		temp1 = sensor.orientation #
-		temp2 = sensor.orientation_g #
-		temp3 = sensor.orientation_gyro #
+		#temp1 = sensor.orientation #
+		#temp2 = sensor.orientation_g #
+		#temp3 = sensor.orientation_gyro #
+		temp1 = sensor.centrifugal
+		temp2 = sensor.tangential
+		#temp1 = sensor.gyro
+		#temp2 = sensor.angularAccel
 
 		print "*",
 
@@ -46,14 +50,15 @@ def on_message(client, userdata, msg):
 		client.publish("SLAM/output/velocity",str(v[0])+"&"+str(v[1])+"&"+str(v[2]))
 
 		#client.publish("SLAM/output/temp",str(temp[0])+"&"+str(temp[1])+"&"+str(temp[2]))
-		client.publish("SLAM/output/temp",str(temp1[0])+"&"+str(temp1[1])+"&"+str(temp1[2])+"&"+str(temp2[0])+"&"+str(temp2[1])+"&"+str(temp2[2])+"&"+str(temp3[0])+"&"+str(temp3[1])+"&"+str(temp3[2]))
+		client.publish("SLAM/output/temp",str(temp1[0])+"&"+str(temp1[1])+"&"+str(temp1[2])+"&"+str(temp2[0])+"&"+str(temp2[1])+"&"+str(temp2[2]))
+		#client.publish("SLAM/output/temp",str(temp1[0])+"&"+str(temp1[1])+"&"+str(temp1[2])+"&"+str(temp2[0])+"&"+str(temp2[1])+"&"+str(temp2[2])+"&"+str(temp3[0])+"&"+str(temp3[1])+"&"+str(temp3[2]))
 
 
-		#client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(ori[0])+"&"+str(ori[1])+"&"+str(ori[2]))
-		client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(ori[0])+"&"+str(ori[1])+"&"+str(ori[2])+"&"+str(temp1[0])+"&"+str(temp1[1])+"&"+str(temp1[2]))
+		client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(ori[0])+"&"+str(ori[1])+"&"+str(ori[2]))
+		#client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(ori[0])+"&"+str(ori[1])+"&"+str(ori[2])+"&"+str(temp1[0])+"&"+str(temp1[1])+"&"+str(temp1[2]))
 
 	elif(str(msg.topic) == "SLAM/input/stop"):
-		print("stop")
+		print("[Main.py] stop")
 		client.publish("SLAM/output/stop","true")
 		sensor.init()
 

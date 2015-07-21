@@ -31,7 +31,7 @@ def init():
 
 #This method is called when mqtt is connected.
 def on_connect(client, userdata, flags, rc):
-    print('Connected with result code '+str(rc))
+    print('[GetOutputData] Connected with result code '+str(rc))
     client.subscribe("SLAM/output/#")
 
 
@@ -108,7 +108,7 @@ def on_message(client, userdata, msg):
 		np.savetxt('./output/velocity.csv', velocity, delimiter=',')
 		np.savetxt('./output/position.csv', position, delimiter=',')
 		np.savetxt('./output/orientation.csv', orientation, delimiter=',')
-		print("stop")
+		print("[GetOutputData] stop")
 		init()
 
 

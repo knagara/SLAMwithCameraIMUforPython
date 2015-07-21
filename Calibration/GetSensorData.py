@@ -28,7 +28,7 @@ def init():
 
 #This method is called when mqtt is connected.
 def on_connect(client, userdata, flags, rc):
-    print('Connected with result code '+str(rc))
+    print('[GetSensorData] Connected with result code '+str(rc))
     client.subscribe("SLAM/input/#")
 
 
@@ -41,8 +41,8 @@ def appendData(data):
 	if(isFirst):
 		time = long(data[0])
 
-	accel0 = np.array([long(data[0])-time,float(data[1]),float(data[2]),float(data[3])])
-	#accel0 = np.array([long(data[0])-time,float(data[1]),float(data[2]),float(data[3]),float(data[7]),float(data[8]),float(data[9]),float(data[10]),float(data[11]),float(data[12])])
+	#accel0 = np.array([long(data[0])-time,float(data[1]),float(data[2]),float(data[3])])
+	accel0 = np.array([long(data[0])-time,float(data[1]),float(data[2]),float(data[3]),float(data[7]),float(data[8]),float(data[9]),float(data[10]),float(data[11]),float(data[12])])
 
 	if(isFirst):
 		accel = accel0
@@ -73,7 +73,7 @@ def on_message(client, userdata, msg):
 		#np.savetxt('./data/magnet.csv', magnet, delimiter=',')
 		#np.savetxt('./data/orientation.csv', orientation, delimiter=',')
 		#sys.exit()
-		print("stop")
+		print("[GetSensorData] stop")
 		init()
 
 
