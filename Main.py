@@ -33,10 +33,11 @@ def on_message(client, userdata, msg):
 		ori = state.getOrientation()
 		#temp
 		#temp1 = sensor.orientation #
-		#temp2 = sensor.orientation_g #
-		#temp3 = sensor.orientation_gyro #
+		#temp2 = sensor.orientation_gyro #
+		#temp3 = sensor.orientation_g #
 		temp1 = sensor.centrifugal
 		temp2 = sensor.tangential
+		temp3 = sensor.r
 		#temp1 = sensor.gyro
 		#temp2 = sensor.angularAccel
 
@@ -50,8 +51,8 @@ def on_message(client, userdata, msg):
 		client.publish("SLAM/output/velocity",str(v[0])+"&"+str(v[1])+"&"+str(v[2]))
 
 		#client.publish("SLAM/output/temp",str(temp[0])+"&"+str(temp[1])+"&"+str(temp[2]))
-		client.publish("SLAM/output/temp",str(temp1[0])+"&"+str(temp1[1])+"&"+str(temp1[2])+"&"+str(temp2[0])+"&"+str(temp2[1])+"&"+str(temp2[2]))
-		#client.publish("SLAM/output/temp",str(temp1[0])+"&"+str(temp1[1])+"&"+str(temp1[2])+"&"+str(temp2[0])+"&"+str(temp2[1])+"&"+str(temp2[2])+"&"+str(temp3[0])+"&"+str(temp3[1])+"&"+str(temp3[2]))
+		#client.publish("SLAM/output/temp",str(temp1[0])+"&"+str(temp1[1])+"&"+str(temp1[2])+"&"+str(temp2[0])+"&"+str(temp2[1])+"&"+str(temp2[2]))
+		client.publish("SLAM/output/temp",str(temp1[0])+"&"+str(temp1[1])+"&"+str(temp1[2])+"&"+str(temp2[0])+"&"+str(temp2[1])+"&"+str(temp2[2])+"&"+str(temp3[0])+"&"+str(temp3[1])+"&"+str(temp3[2]))
 
 
 		client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(ori[0])+"&"+str(ori[1])+"&"+str(ori[2]))

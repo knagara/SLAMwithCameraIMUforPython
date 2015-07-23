@@ -28,10 +28,12 @@ class Sensor:
 		#variables
 		self.isFirstTime = True
 		self.accel = np.array([])
+		self.accel1 = np.array([])
 		self.gravity = np.array([])
 		self.magnet = np.array([])
 		self.magnet_fixed = np.array([])
 		self.gyro = np.array([])
+		self.gyro1 = np.array([])
 		self.orientation = np.array([0.0,0.0,0.0])
 		self.orientation_g = np.array([0.0,0.0,0.0])
 		self.orientation_gyro = np.array([0.0,0.0,0.0])
@@ -46,8 +48,9 @@ class Sensor:
 		self.rotY_ = np.identity(3)
 		self.rotZ_ = np.identity(3)
 		self.rot_ = np.identity(3)
-		self.gyro1 = np.array([])
 		self.r = np.array([0.0,0.0,0.0])
+		self.v = np.array([0.0,0.0,0.0])
+		self.v1 = np.array([0.0,0.0,0.0])
 		self.I = np.identity(3)
 		self.P = np.array([0.0,0.0,0.0]) # covariance matrix of KF for orientation
 		self.Q = np.diag([0.1,0.1,0.1]) # noise of KF for orientation
@@ -63,10 +66,12 @@ class Sensor:
 		#variables
 		self.isFirstTime = True
 		self.accel = np.array([])
+		self.accel1 = np.array([])
 		self.gravity = np.array([])
 		self.magnet = np.array([])
 		self.magnet_fixed = np.array([])
 		self.gyro = np.array([])
+		self.gyro1 = np.array([])
 		self.orientation = np.array([0.0,0.0,0.0])
 		self.orientation_g = np.array([0.0,0.0,0.0])
 		self.orientation_gyro = np.array([0.0,0.0,0.0])
@@ -81,8 +86,9 @@ class Sensor:
 		self.rotY_ = np.identity(3)
 		self.rotZ_ = np.identity(3)
 		self.rot_ = np.identity(3)
-		self.gyro1 = np.array([])
 		self.r = np.array([0.0,0.0,0.0])
+		self.v = np.array([0.0,0.0,0.0])
+		self.v1 = np.array([0.0,0.0,0.0])
 		self.I = np.identity(3)
 		self.P = np.array([0.0,0.0,0.0]) # covariance matrix of KF for orientation
 		self.Q = np.diag([0.1,0.1,0.1]) # noise of KF for orientation
@@ -99,6 +105,7 @@ class Sensor:
 		self.state.setTime(float(long(data[0]) / 1000.0))
 
 		if(self.isFirstTime==False):
+			self.accel1 = self.accel
 			self.gyro1 = self.gyro
 
 		self.accel = np.array([float(data[1]),float(data[2]),float(data[3])])
@@ -211,10 +218,14 @@ class Sensor:
 		wv = self.gyro
 		#Angular acceleration
 		wa = (self.gyro - self.gyro1)/self.state.getTimeDelta()
-		#r
+		#wn2
 		wn2 = pow(np.linalg.norm(wv),2) # norm of gyro vector
-		if(wn2 > 0.01):
-			self.r = np.cross(self.state.v,wv)/wn2
+		if(wn2 > 0.1):
+			#v
+			self.v1 = self.v
+			self.v = self.v1 + self.accel1 * self.state.getTimeDelta()
+			#r
+			self.r = np.cross(self.v,wv)/wn2
 			# a = a - wv*(wv*r) - wa*r
 			self.centrifugal = np.cross(wv,np.cross(wv,self.r))
 			self.tangential = np.cross(wa,self.r)
@@ -224,7 +235,10 @@ class Sensor:
 			#self.accel = self.accel - np.cross(wv,np.cross(wv,self.r)) - np.cross(wa,self.r)
 		else:
 			self.r = np.array([0.0,0.0,0.0])
+			self.centrifugal = np.array([0.0,0.0,0.0])
+			self.tangential = np.array([0.0,0.0,0.0])
 			self.angularAccel = wa
+			self.v = 0
 
 
 
