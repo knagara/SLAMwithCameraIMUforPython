@@ -115,7 +115,7 @@ class Sensor:
 		self.calcRotationMatrix()
 
 		if(self.isFirstTime==False):
-			self.removeCentrifugalAndTangentialAccel()
+			#self.removeCentrifugalAndTangentialAccel()
 			self.calcGlobalAcceleration()
 			self.state.localization()
 
