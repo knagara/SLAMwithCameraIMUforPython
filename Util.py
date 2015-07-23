@@ -4,6 +4,10 @@ from math import *
 import cv2 as cv
 import numpy as np
 
+def lowPassFilter(value,newValue,alpha):
+	value = value * alpha + newValue * (1 - alpha)
+	return value
+
 def matrixGyro2Euler(x,y):
 	#回転行列
 	R = np.array([

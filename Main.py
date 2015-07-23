@@ -28,8 +28,8 @@ def on_message(client, userdata, msg):
 		sensor.processData(data)
 		x = state.getPosition()
 		v = state.getVelocity()
-		#a = state.getAcceleration()
-		a = sensor.accel #
+		a = state.getAcceleration()
+		#a = sensor.accel #
 		ori = state.getOrientation()
 		#temp
 		#temp1 = sensor.orientation #
@@ -37,6 +37,7 @@ def on_message(client, userdata, msg):
 		#temp3 = sensor.orientation_g #
 		temp1 = sensor.centrifugal
 		temp2 = sensor.tangential
+		#temp3 = sensor.accel
 		temp3 = sensor.r
 		#temp1 = sensor.gyro
 		#temp2 = sensor.angularAccel

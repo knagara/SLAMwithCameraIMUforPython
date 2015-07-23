@@ -33,7 +33,7 @@ class Sensor:
 		self.magnet = np.array([])
 		self.magnet_fixed = np.array([])
 		self.gyro = np.array([])
-		self.gyro_diff = np.array([])
+		self.gyro1 = np.array([])
 		self.orientation = np.array([0.0,0.0,0.0])
 		self.orientation_g = np.array([0.0,0.0,0.0])
 		self.orientation_gyro = np.array([0.0,0.0,0.0])
@@ -48,15 +48,16 @@ class Sensor:
 		self.rotY_ = np.identity(3)
 		self.rotZ_ = np.identity(3)
 		self.rot_ = np.identity(3)
+		self.r = np.array([0.0,0.0,0.0])
+		self.v = np.array([0.0,0.0,0.0])
+		self.v1 = np.array([0.0,0.0,0.0])
 		self.I = np.identity(3)
 		self.P = np.array([0.0,0.0,0.0]) # covariance matrix of KF for orientation
 		self.Q = np.diag([0.1,0.1,0.1]) # noise of KF for orientation
 		self.R = np.diag([0.01,0.01,0.01]) # noise of KF for orientation
 		self.centrifugal = np.array([0.0,0.0,0.0])
 		self.tangential = np.array([0.0,0.0,0.0])
-		self.r = np.array([0.0,0.0,0.0])
-		self.v = np.array([0.0,0.0,0.0])
-		self.v1 = np.array([0.0,0.0,0.0])
+		self.angularAccel = np.array([0.0,0.0,0.0])
 
 
 	def init(self):
@@ -70,7 +71,7 @@ class Sensor:
 		self.magnet = np.array([])
 		self.magnet_fixed = np.array([])
 		self.gyro = np.array([])
-		self.gyro_diff = np.array([])
+		self.gyro1 = np.array([])
 		self.orientation = np.array([0.0,0.0,0.0])
 		self.orientation_g = np.array([0.0,0.0,0.0])
 		self.orientation_gyro = np.array([0.0,0.0,0.0])
@@ -85,15 +86,16 @@ class Sensor:
 		self.rotY_ = np.identity(3)
 		self.rotZ_ = np.identity(3)
 		self.rot_ = np.identity(3)
+		self.r = np.array([0.0,0.0,0.0])
+		self.v = np.array([0.0,0.0,0.0])
+		self.v1 = np.array([0.0,0.0,0.0])
 		self.I = np.identity(3)
 		self.P = np.array([0.0,0.0,0.0]) # covariance matrix of KF for orientation
 		self.Q = np.diag([0.1,0.1,0.1]) # noise of KF for orientation
 		self.R = np.diag([0.01,0.01,0.01]) # noise of KF for orientation
 		self.centrifugal = np.array([0.0,0.0,0.0])
 		self.tangential = np.array([0.0,0.0,0.0])
-		self.r = np.array([0.0,0.0,0.0])
-		self.v = np.array([0.0,0.0,0.0])
-		self.v1 = np.array([0.0,0.0,0.0])
+		self.angularAccel = np.array([0.0,0.0,0.0])
 
 
 
@@ -104,12 +106,12 @@ class Sensor:
 
 		if(self.isFirstTime==False):
 			self.accel1 = self.accel
+			self.gyro1 = self.gyro
 
 		self.accel = np.array([float(data[1]),float(data[2]),float(data[3])])
 		self.gravity = np.array([-float(data[4]),-float(data[5]),-float(data[6])])
 		self.magnet = np.array([float(data[7]),float(data[8]),float(data[9])])
 		self.gyro = np.array([float(data[10]),float(data[11]),float(data[12])])
-		self.gyro_diff = np.array([float(data[13]),float(data[14]),float(data[15])])
 
 		self.calcOrientation()
 		self.calcRotationMatrix()
@@ -137,7 +139,7 @@ class Sensor:
 			resultKF = KF.execKF1(self.orientation_g, self.gyro, self.orientation, self.P, self.I, matrixGyro2Euler, self.I, self.Q, self.R)
 			self.orientation = resultKF[0]
 			self.P = resultKF[1]
-			
+
 			if(self.orientation[0]>=pi):
 				self.orientation[0] -= pi*2.0
 			if(self.orientation[1]>=pi):
@@ -150,7 +152,7 @@ class Sensor:
 				self.orientation[1] += pi*2.0
 			if(self.orientation[2]<-pi):
 				self.orientation[2] += pi*2.0
-		
+
 		self.calcOrientationByGyro()
 		self.state.setOrientation(self.orientation)
 
@@ -163,7 +165,6 @@ class Sensor:
 			t = self.state.getTimeDelta()
 			gyroEuler = np.dot(Util.matrixGyro2Euler(self.orientation_gyro[0],self.orientation_gyro[1]),self.gyro)
 			self.orientation_gyro = self.orientation_gyro + gyroEuler * t
-
 			if(self.orientation_gyro[0]>=pi):
 				self.orientation_gyro[0] -= pi*2.0
 			if(self.orientation_gyro[1]>=pi):
@@ -216,7 +217,7 @@ class Sensor:
 		#Angular velocity
 		wv = self.gyro
 		#Angular acceleration
-		wa = self.gyro_diff
+		wa = (self.gyro - self.gyro1)/self.state.getTimeDelta()
 		#wn2
 		wn2 = pow(np.linalg.norm(wv),2) # norm of gyro vector
 		if(wn2 > 0.1):
@@ -228,13 +229,16 @@ class Sensor:
 			# a = a - wv*(wv*r) - wa*r
 			self.centrifugal = np.cross(wv,np.cross(wv,self.r))
 			self.tangential = Util.lowPassFilter(self.tangential,np.cross(wa,self.r),0.8)
+			self.angularAccel = wa
+			#self.accel = self.accel + self.centrifugal
 			self.accel = self.accel + self.centrifugal - self.tangential
+			#self.accel = self.accel - np.cross(wv,np.cross(wv,self.r)) - np.cross(wa,self.r)
 		else:
 			self.r = np.array([0.0,0.0,0.0])
 			self.centrifugal = np.array([0.0,0.0,0.0])
 			self.tangential = np.array([0.0,0.0,0.0])
-			self.v = np.array([0.0,0.0,0.0])
-			self.v1 = np.array([0.0,0.0,0.0])
+			self.angularAccel = wa
+			self.v = 0
 
 
 
