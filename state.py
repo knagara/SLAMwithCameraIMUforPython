@@ -2,13 +2,15 @@
 
 """
 state.py
-Class for state of device
+
+author: Keita Nagara (University of Tokyo)
 
 variables:
-	t, t1, t2
+	t, t1, t2, t3
 	x, x1
 	v, v1
 	a, a1
+	orientation
 
 methods:
 	getter

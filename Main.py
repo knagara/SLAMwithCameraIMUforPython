@@ -2,6 +2,17 @@
 
 """
 Main.py
+
+author: Keita Nagara (University of Tokyo)
+
+All process start from this program.
+This program receives sensor data from Android application via MQTT message,
+and then it calls methods of "sensor.py".
+"sensor.py" processes sensor data, and results are stored in "state.py".
+
+FYI:
+MQTT is one of the lightweight messaging protocols.
+If you want to run this program, you must prepare your own server and install MQTT broker, and make "server.conf" on the parent directory. "server.conf" is the file like "hostIPaddress&portNumber&username&password".
 """
 
 import sys

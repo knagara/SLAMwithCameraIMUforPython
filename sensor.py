@@ -2,14 +2,19 @@
 
 """
 sensor.py
-Class for IMU sensors
+
+author: Keita Nagara (University of Tokyo)
+
+This class is called from "Main.py", and process sensor data.
 
 methods:
-	processData(data)
+	processData(data) <- called from "Main.py"
+	
 	calcOrientation()
 	calcRotationMatrix()
 	removeCentrifugalAndTangentialAccel()
 	calcGlobalAcceleration()
+	
 	init()
 """
 
@@ -198,9 +203,7 @@ class Sensor:
 		self.rot = np.dot(self.rotZ,np.dot(self.rotY,self.rotX))
 
 
-	#Remove Centrifugal and Tangential Accel
-	#see also "Studies on Orientation Measurement in Sports Using Inertial and Magnetic Field Sensors"
-	#         https://www.jstage.jst.go.jp/article/sposun/22/2/22_255/_pdf
+	#Remove Centrifugal Accel
 	def removeCentrifugalAndTangentialAccel(self):
 		#Angular velocity
 		w = self.gyro
