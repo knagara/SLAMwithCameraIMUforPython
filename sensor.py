@@ -141,7 +141,7 @@ class Sensor:
 			if(self.orientation[2]<-pi):
 				self.orientation[2] += pi*2.0
 		
-		self.calcOrientationByGyro()
+		#self.calcOrientationByGyro()
 		self.state.setOrientation(self.orientation)
 
 
@@ -175,13 +175,13 @@ class Sensor:
 	def calcOrientationByGravity(self):
 		#x roll
 		self.orientation_g[0] = atan2(self.gravity[1],self.gravity[2])
-		#y pitch
-		self.orientation_g[1] = atan2(-self.gravity[0],hypot(self.gravity[1],self.gravity[2]))
-		#sign(+ or -) is decided here
-		#sign = 1.0
-		#if(self.gravity[2]<0): #decided by z axis
-		#	sign = -1.0
-		#self.orientation_g[1] = atan2(-self.gravity[0],sign*hypot(self.gravity[1],self.gravity[2]))
+		#y pitch (-90 ～ +90)
+		#self.orientation_g[1] = atan2(-self.gravity[0],hypot(self.gravity[1],self.gravity[2]))
+		#y pitch (-180 ～ +180)
+		if(self.gravity[2]<0): #decided by z axis
+			self.orientation_g[1] = atan2(-self.gravity[0],-hypot(self.gravity[1],self.gravity[2]))
+		else:
+			self.orientation_g[1] = atan2(-self.gravity[0],hypot(self.gravity[1],self.gravity[2]))
 		#z yaw
 		self.rotX_ = Util.rotationMatrixX(self.orientation_g[0])
 		self.rotY_ = Util.rotationMatrixY(self.orientation_g[1])
@@ -203,27 +203,33 @@ class Sensor:
 	#         https://www.jstage.jst.go.jp/article/sposun/22/2/22_255/_pdf
 	def removeCentrifugalAndTangentialAccel(self):
 		#Angular velocity
-		wv = self.gyro
+		w = self.gyro
 		#Angular acceleration
-		wa = self.gyro_diff
-		#wn2
-		wn2 = pow(np.linalg.norm(wv),2) # norm of gyro vector
-		if(wn2 > 0.1):
-			#v
-			self.v1 = self.v
-			self.v = self.v1 + np.dot(self.rot,self.accel1) * self.state.getTimeDelta()
-			#r
-			self.r = np.cross(self.v,wv)/wn2
-			# a = a - wv*(wv*r) - wa*r
-			self.centrifugal = np.cross(wv,np.cross(wv,self.r))
-			self.tangential = Util.lowPassFilter(self.tangential,np.cross(wa,self.r),0.8)
-			self.accel = self.accel + self.centrifugal - self.tangential
-		else:
-			self.r = np.array([0.0,0.0,0.0])
-			self.centrifugal = np.array([0.0,0.0,0.0])
-			self.tangential = np.array([0.0,0.0,0.0])
-			self.v = np.array([0.0,0.0,0.0])
-			self.v1 = np.array([0.0,0.0,0.0])
+		#wa = self.gyro_diff
+		#wn2 (norm of gyro vector)^2
+		wn2 = pow(np.linalg.norm(w),2)
+		#norm of global v
+		vn = np.linalg.norm(self.state.v)
+		#centrifugal
+		centrifugal_x = np.array([0.0,0.0,0.0])
+		centrifugal_y = np.array([0.0,0.0,0.0])
+		if(w[0] > 0.3):
+			#v of x
+			vx = np.array([0.0,vn*sin(self.orientation[0]),vn*cos(self.orientation[0])])
+			#w of x
+			wx = np.array([w[0],0.0,0.0])
+			#w*(w*r) of x
+			centrifugal_x = np.cross(wx,np.cross(wx,np.cross(vx,wx)/wn2))
+		if(w[1] > 0.3):
+			#v of y
+			vy = np.array([-vn*sin(self.orientation[1]),0.0,vn*cos(self.orientation[1])])
+			#w of y
+			wy = np.array([0.0,w[1],0.0])
+			#w*(w*r) of y
+			centrifugal_y = np.cross(wy,np.cross(wy,np.cross(vy,wy)/wn2))
+		#a = a - w*(w*r)
+		self.centrifugal = centrifugal_x + centrifugal_y
+		self.accel = self.accel - self.centrifugal
 
 
 
