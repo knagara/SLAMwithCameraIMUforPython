@@ -5,10 +5,10 @@ sensor.py
 Class for IMU sensors
 
 methods:
-	processData(data)
+	setData(data)
+	processData()
 	calcOrientation()
 	calcRotationMatrix()
-	removeCentrifugalAndTangentialAccel()
 	calcGlobalAcceleration()
 	init()
 """
@@ -37,18 +37,23 @@ class Sensor:
 		self.orientation = np.array([0.0,0.0,0.0])
 		self.orientation_g = np.array([0.0,0.0,0.0])
 		self.orientation_gyro = np.array([0.0,0.0,0.0])
-		self.rotX_ = np.identity(3)
-		self.rotY_ = np.identity(3)
+		self.cosx = 0.0
+		self.cosy = 0.0
+		self.cosz = 0.0
 		self.rotX = np.identity(3)
 		self.rotY = np.identity(3)
-		self.rotZ = np.identity(3)
+		self.rotXY = np.identity(3)
 		self.rot = np.identity(3)
+		self.rotX_ = np.identity(3)
+		self.rotY_ = np.identity(3)
+		self.rotZ_ = np.identity(3)
+		self.rot_ = np.identity(3)
 		self.I = np.identity(3)
 		self.P = np.array([0.0,0.0,0.0]) # covariance matrix of KF for orientation
 		self.Q = np.diag([0.1,0.1,0.1]) # noise of KF for orientation
 		self.R = np.diag([0.01,0.01,0.01]) # noise of KF for orientation
-		self.centrifugal = np.array([0.0,0.0,0.0]) #
-		self.tangential = np.array([0.0,0.0,0.0]) #
+		self.centrifugal = np.array([0.0,0.0,0.0])
+		self.tangential = np.array([0.0,0.0,0.0])
 		self.r = np.array([0.0,0.0,0.0])
 		self.v = np.array([0.0,0.0,0.0])
 		self.v1 = np.array([0.0,0.0,0.0])
@@ -69,18 +74,23 @@ class Sensor:
 		self.orientation = np.array([0.0,0.0,0.0])
 		self.orientation_g = np.array([0.0,0.0,0.0])
 		self.orientation_gyro = np.array([0.0,0.0,0.0])
-		self.rotX_ = np.identity(3)
-		self.rotY_ = np.identity(3)
+		self.cosx = 0.0
+		self.cosy = 0.0
+		self.cosz = 0.0
 		self.rotX = np.identity(3)
 		self.rotY = np.identity(3)
-		self.rotZ = np.identity(3)
+		self.rotXY = np.identity(3)
 		self.rot = np.identity(3)
+		self.rotX_ = np.identity(3)
+		self.rotY_ = np.identity(3)
+		self.rotZ_ = np.identity(3)
+		self.rot_ = np.identity(3)
 		self.I = np.identity(3)
 		self.P = np.array([0.0,0.0,0.0]) # covariance matrix of KF for orientation
 		self.Q = np.diag([0.1,0.1,0.1]) # noise of KF for orientation
 		self.R = np.diag([0.01,0.01,0.01]) # noise of KF for orientation
-		self.centrifugal = np.array([0.0,0.0,0.0]) #
-		self.tangential = np.array([0.0,0.0,0.0]) #
+		self.centrifugal = np.array([0.0,0.0,0.0])
+		self.tangential = np.array([0.0,0.0,0.0])
 		self.r = np.array([0.0,0.0,0.0])
 		self.v = np.array([0.0,0.0,0.0])
 		self.v1 = np.array([0.0,0.0,0.0])
@@ -105,7 +115,7 @@ class Sensor:
 		self.calcRotationMatrix()
 
 		if(self.isFirstTime==False):
-			self.removeCentrifugalAndTangentialAccel()
+			#self.removeCentrifugalAndTangentialAccel()
 			self.calcGlobalAcceleration()
 			self.state.localization()
 
@@ -183,19 +193,20 @@ class Sensor:
 		#	sign = -1.0
 		#self.orientation_g[1] = atan2(-self.gravity[0],sign*hypot(self.gravity[1],self.gravity[2]))
 		#z yaw
-		self.rotX_ = Util.rotationMatrixX(self.orientation_g[0])
-		self.rotY_ = Util.rotationMatrixY(self.orientation_g[1])
-		self.magnet_fixed = np.dot(np.dot(self.rotY_,self.rotX_),self.magnet)
+		self.rotX = Util.rotationMatrixX(self.orientation_g[0])
+		self.rotY = Util.rotationMatrixY(self.orientation_g[1])
+		self.rotXY = np.dot(self.rotY,self.rotX)
+		self.magnet_fixed = np.dot(self.rotXY,self.magnet)
 		self.orientation_g[2] = atan2(-self.magnet_fixed[1],self.magnet_fixed[0])
 
 
 	#Calc rotation matrix from orientation
 	def calcRotationMatrix(self):
 		#Rotation matrix R(Z)R(Y)R(X)
-		self.rotX = Util.rotationMatrixX(self.orientation[0])
-		self.rotY = Util.rotationMatrixY(self.orientation[1])
-		self.rotZ = Util.rotationMatrixZ(self.orientation[2])
-		self.rot = np.dot(self.rotZ,np.dot(self.rotY,self.rotX))
+		self.rotX_ = Util.rotationMatrixX(self.orientation[0])
+		self.rotY_ = Util.rotationMatrixY(self.orientation[1])
+		self.rotZ_ = Util.rotationMatrixZ(self.orientation[2])
+		self.rot_ = np.dot(self.rotZ_,np.dot(self.rotY_,self.rotX_))
 
 
 	#Remove Centrifugal and Tangential Accel
@@ -211,7 +222,7 @@ class Sensor:
 		if(wn2 > 0.1):
 			#v
 			self.v1 = self.v
-			self.v = self.v1 + np.dot(self.rot,self.accel1) * self.state.getTimeDelta()
+			self.v = self.v1 + np.dot(self.rot_,self.accel1) * self.state.getTimeDelta()
 			#r
 			self.r = np.cross(self.v,wv)/wn2
 			# a = a - wv*(wv*r) - wa*r
@@ -230,5 +241,5 @@ class Sensor:
 	#Calc accel in global coordinates by using orientation
 	def calcGlobalAcceleration(self):
 		#accel in global = R(Z)R(Y)R(X) * accel
-		self.state.setAccel(np.dot(self.rot,self.accel))
+		self.state.setAccel(np.dot(self.rot_,self.accel))
 
