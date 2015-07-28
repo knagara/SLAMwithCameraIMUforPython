@@ -146,7 +146,8 @@ class Sensor:
 			if(self.orientation[2]<-pi):
 				self.orientation[2] += pi*2.0
 		
-		#self.calcOrientationByGyro()
+		self.calcOrientationByGyro()
+		self.orientation = self.orientation_gyro
 		self.state.setOrientation(self.orientation)
 
 
