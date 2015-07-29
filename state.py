@@ -40,6 +40,8 @@ class State:
 		self.v1 = np.array([0.0,0.0,0.0])
 		self.a = np.array([0.0,0.0,0.0])
 		self.a1 = np.array([0.0,0.0,0.0])
+		self.a2 = np.array([0.0,0.0,0.0])
+		self.a3 = np.array([0.0,0.0,0.0])
 		self.orientation = np.array([0.0,0.0,0.0])
 
 
@@ -54,6 +56,8 @@ class State:
 		self.v1 = np.array([0.0,0.0,0.0])
 		self.a = np.array([0.0,0.0,0.0])
 		self.a1 = np.array([0.0,0.0,0.0])
+		self.a2 = np.array([0.0,0.0,0.0])
+		self.a3 = np.array([0.0,0.0,0.0])
 		self.orientation = np.array([0.0,0.0,0.0])
 
 
@@ -64,6 +68,8 @@ class State:
 		self.t = time
 
 	def setAccel(self,accel):
+		self.a3 = self.a2
+		self.a2 = self.a1
 		self.a1 = self.a
 		self.a = accel
 
@@ -95,31 +101,29 @@ class State:
 			self.v = (self.t - self.t1)*self.a1
 		else:
 			self.v1 = self.v
-			self.v = self.v1 + (self.t - self.t1)*self.a1
 			self.x1 = self.x
+			
+			#加速度がしきい値を下回る場合，速度と加速度をゼロとみなす
+			# t-1 ～ t-3 まで判定し，すべて下回る場合のみ実行
+			if(self.a1[0] < 0.07 and self.a1[0] > -0.07 and self.a2[0] < 0.07 and self.a2[0] > -0.07 and self.a3[0] < 0.07 and self.a3[0] > -0.07):
+				self.v1[0] = 0.0
+				self.a1[0] = 0.0
+			if(self.a1[1] < 0.07 and self.a1[1] > -0.07 and self.a2[1] < 0.07 and self.a2[1] > -0.07 and self.a3[2] < 0.07 and self.a3[2] > -0.07):
+				self.v1[1] = 0.0
+				self.a1[1] = 0.0
+			if(self.a1[2] < 0.07 and self.a1[2] > -0.07 and self.a2[2] < 0.07 and self.a2[2] > -0.07 and self.a3[2] < 0.07 and self.a3[2] > -0.07):
+				self.v1[2] = 0.0
+				self.a1[2] = 0.0
+				
+			self.v = self.v1 + (self.t - self.t1)*self.a1
 			self.x = self.x1 + (self.t - self.t1)*self.v1 + 0.5*(self.t - self.t1)*(self.t - self.t1)*self.a1
-
-			#print(self.x)
+				
 
 
 	#Estimate position of device
 	#return position(x,y,z)
 	def localization(self):
 		self.simpleLocalization()
-		#KFLocalization()
 
 
-"""
-	#estimate position by KF (Kalman Filter)
-	def KFLocalization(self):
-		Y = np.mat([[self.x[0]],[self.x[1]],[self.x[2]],[self.v[0]],[self.v[1]],[self.v[2]],[self.a[0]],[self.a[1]],[self.a[2]]])
-		mu0 = np.mat([[self.x[0]],[self.x[1]],[self.x[2]],[self.v[0]],[self.v[1]],[self.v[2]],[self.a[0]],[self.a[1]],[self.a[2]]])
-		Sigma0 =
-		A =
-		B =
-		C =
-		Q =
-		R =
-		pos = KF.execKF(1,)
-"""
 

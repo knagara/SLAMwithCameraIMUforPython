@@ -110,7 +110,7 @@ class Sensor:
 		self.calcRotationMatrix()
 
 		if(self.isFirstTime==False):
-			self.removeCentrifugalAndTangentialAccel()
+			#self.removeCentrifugalAndTangentialAccel()
 			self.calcGlobalAcceleration()
 			self.state.localization()
 
@@ -217,14 +217,14 @@ class Sensor:
 		#centrifugal
 		centrifugal_x = np.array([0.0,0.0,0.0])
 		centrifugal_y = np.array([0.0,0.0,0.0])
-		if(w[0] > 0.3):
+		if(w[0] > 0.3 or w[0] < -0.3):
 			#v of x
 			vx = np.array([0.0,vn*sin(self.orientation[0]),vn*cos(self.orientation[0])])
 			#w of x
 			wx = np.array([w[0],0.0,0.0])
 			#w*(w*r) of x
 			centrifugal_x = np.cross(wx,np.cross(wx,np.cross(vx,wx)/wn2))
-		if(w[1] > 0.3):
+		if(w[1] > 0.3 or w[1] < -0.3):
 			#v of y
 			vy = np.array([-vn*sin(self.orientation[1]),0.0,vn*cos(self.orientation[1])])
 			#w of y
