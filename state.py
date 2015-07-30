@@ -42,7 +42,9 @@ class State:
 		self.a1 = np.array([0.0,0.0,0.0])
 		self.a2 = np.array([0.0,0.0,0.0])
 		self.a3 = np.array([0.0,0.0,0.0])
+		self.a4 = np.array([0.0,0.0,0.0])
 		self.orientation = np.array([0.0,0.0,0.0])
+		self.threshold = 0.05
 
 
 	def init(self):
@@ -58,7 +60,9 @@ class State:
 		self.a1 = np.array([0.0,0.0,0.0])
 		self.a2 = np.array([0.0,0.0,0.0])
 		self.a3 = np.array([0.0,0.0,0.0])
+		self.a4 = np.array([0.0,0.0,0.0])
 		self.orientation = np.array([0.0,0.0,0.0])
+		self.threshold = 0.05
 
 
 	def setTime(self,time):
@@ -68,6 +72,7 @@ class State:
 		self.t = time
 
 	def setAccel(self,accel):
+		self.a4 = self.a3
 		self.a3 = self.a2
 		self.a2 = self.a1
 		self.a1 = self.a
@@ -95,28 +100,30 @@ class State:
 	#estimate position by simple Eq.
 	def simpleLocalization(self):
 
+		dt = self.t - self.t1
+		
 		if(self.t2 == 0):
 			pass
 		elif(self.t3 == 0):
-			self.v = (self.t - self.t1)*self.a1
+			self.v = dt*self.a1
 		else:
 			self.v1 = self.v
 			self.x1 = self.x
 			
 			#加速度がしきい値を下回る場合，速度と加速度をゼロとみなす
-			# t-1 ～ t-3 まで判定し，すべて下回る場合のみ実行
-			if(self.a1[0] < 0.07 and self.a1[0] > -0.07 and self.a2[0] < 0.07 and self.a2[0] > -0.07 and self.a3[0] < 0.07 and self.a3[0] > -0.07):
+			# t-1 ～ t-4 まで判定し，すべて下回る場合のみ実行
+			if(self.a1[0] < self.threshold and self.a1[0] > -self.threshold and self.a2[0] < self.threshold and self.a2[0] > -self.threshold and self.a3[0] < self.threshold and self.a3[0] > -self.threshold and self.a4[0] < self.threshold and self.a4[0] > -self.threshold):
 				self.v1[0] = 0.0
 				self.a1[0] = 0.0
-			if(self.a1[1] < 0.07 and self.a1[1] > -0.07 and self.a2[1] < 0.07 and self.a2[1] > -0.07 and self.a3[2] < 0.07 and self.a3[2] > -0.07):
+			if(self.a1[1] < self.threshold and self.a1[1] > -self.threshold and self.a2[1] < self.threshold and self.a2[1] > -self.threshold and self.a3[2] < self.threshold and self.a3[2] > -self.threshold and self.a4[2] < self.threshold and self.a4[2] > -self.threshold):
 				self.v1[1] = 0.0
 				self.a1[1] = 0.0
-			if(self.a1[2] < 0.07 and self.a1[2] > -0.07 and self.a2[2] < 0.07 and self.a2[2] > -0.07 and self.a3[2] < 0.07 and self.a3[2] > -0.07):
+			if(self.a1[2] < self.threshold and self.a1[2] > -self.threshold and self.a2[2] < self.threshold and self.a2[2] > -self.threshold and self.a3[2] < self.threshold and self.a3[2] > -self.threshold and self.a4[2] < self.threshold and self.a4[2] > -self.threshold):
 				self.v1[2] = 0.0
 				self.a1[2] = 0.0
 				
-			self.v = self.v1 + (self.t - self.t1)*self.a1
-			self.x = self.x1 + (self.t - self.t1)*self.v1 + 0.5*(self.t - self.t1)*(self.t - self.t1)*self.a1
+			self.v = self.v1 + dt*self.a1
+			self.x = self.x1 + dt*self.v1 + 0.5*dt*dt*self.a1
 				
 
 
