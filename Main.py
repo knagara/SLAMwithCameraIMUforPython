@@ -17,7 +17,7 @@ If you want to run this program, you must prepare your own server and install MQ
 
 import sys
 from math import *
-import cv2 as cv
+import cv2
 import numpy as np
 import paho.mqtt.client as mqtt
 from sensor import Sensor
@@ -36,8 +36,9 @@ def on_message(client, userdata, msg):
 	data = str(msg.payload).split('&')
 	#Append data to the array
 	if(str(msg.topic) == "SLAM/input/camera"):
-		mat = cv.CreateMat(300, 500, cv.CV_32FC1)
-		mat.put(0,0,msg.payload)
+		mat = np.array((300,400,3), np.uint8)
+		#mat.put(0,0,msg.payload)
+		print(str(msg.payload))
 		
 	elif(str(msg.topic) == "SLAM/input/all"):
 		sensor.processData(data)
