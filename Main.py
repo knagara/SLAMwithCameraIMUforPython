@@ -35,7 +35,11 @@ def on_message(client, userdata, msg):
 	global sensor, x, a
 	data = str(msg.payload).split('&')
 	#Append data to the array
-	if(str(msg.topic) == "SLAM/input/all"):
+	if(str(msg.topic) == "SLAM/input/camera"):
+		mat = cv.CreateMat(300, 500, cv.CV_32FC1)
+		mat.put(0,0,msg.payload)
+		
+	elif(str(msg.topic) == "SLAM/input/all"):
 		sensor.processData(data)
 		x = state.getPosition()
 		v = state.getVelocity()
