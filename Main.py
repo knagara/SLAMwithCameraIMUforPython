@@ -38,7 +38,9 @@ def on_message(client, userdata, msg):
 	if(str(msg.topic) == "SLAM/input/camera"):
 		mat = np.array((300,400,3), np.uint8)
 		#mat.put(0,0,msg.payload)
-		print(str(msg.payload))
+		#print(str(msg.payload))
+		read = np.fromfile(msg.payload,uint8)
+		print(str(read))
 		
 	elif(str(msg.topic) == "SLAM/input/all"):
 		sensor.processData(data)
