@@ -42,7 +42,7 @@ def appendData(data):
 		time = long(data[0])
 
 	#accel0 = np.array([long(data[0])-time,float(data[1]),float(data[2]),float(data[3])])
-	accel0 = np.array([long(data[0])-time,float(data[1]),float(data[2]),float(data[3]),float(data[4]),float(data[5]),float(data[6]),float(data[10]),float(data[11]),float(data[12]),float(data[13]),float(data[14]),float(data[15])])
+	accel0 = np.array([long(data[0])-time,float(data[1]),float(data[2]),float(data[3]),float(data[10]),float(data[11]),float(data[12])])
 
 	if(isFirst):
 		accel = accel0
