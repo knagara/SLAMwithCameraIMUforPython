@@ -22,6 +22,7 @@ import numpy as np
 import paho.mqtt.client as mqtt
 from sensor import Sensor
 from state import State
+from image import Image
 
 
 #This method is called when mqtt is connected.
@@ -32,15 +33,11 @@ def on_connect(client, userdata, flags, rc):
 
 #This method is called when message is arrived.
 def on_message(client, userdata, msg):
-	global sensor, x, a
+	global sensor, image, x, a
 	data = str(msg.payload).split('&')
 	#Append data to the array
 	if(str(msg.topic) == "SLAM/input/camera"):
-		mat = np.array((300,400,3), np.uint8)
-		#mat.put(0,0,msg.payload)
-		#print(str(msg.payload))
-		read = np.fromfile(msg.payload,uint8)
-		print(str(read))
+		image.processData(data)
 		
 	elif(str(msg.topic) == "SLAM/input/all"):
 		sensor.processData(data)
@@ -92,6 +89,8 @@ if __name__ == '__main__':
 	state = State()
 	#sensor.py
 	sensor = Sensor(state)
+	#image.py
+	image = Image(state)
 	#position of device
 	x = np.array([0.0,0.0,0.0])
 	#orientation of device
