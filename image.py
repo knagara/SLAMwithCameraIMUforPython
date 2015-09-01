@@ -39,15 +39,20 @@ class Image:
 
 	#Set new data and Execute all functions
 	def processData(self,data):
+		
+		#if nomatch then nothing to do
 		if(data[0] == "nomatch"):
 			print("nomatch")
 			return
 		
 		print("+"),
+
 		keypoints = []
 		for d in data:
 			if(d != ''):
 				keypoints.append(KeyPoint(d))
 		
-		print(str(keypoints[0].x))
-		print(str(keypoints[0].y))
+		#print(str(keypoints[0].x))
+		#print(str(keypoints[0].y))
+		#keypoints[0].descriptor.printData()
+		

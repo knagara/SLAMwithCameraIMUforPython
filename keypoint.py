@@ -7,6 +7,8 @@ author: Keita Nagara (University of Tokyo)
 
 Class for key point in image
 """
+ 
+from descriptor import Descriptor
 
 class KeyPoint:
 
@@ -18,4 +20,4 @@ class KeyPoint:
 		self.id = int(data[1])
 		self.x = float(data[2])
 		self.y = float(data[3])
-		self.descriptor = data[4].split(',')
+		self.descriptor = Descriptor(data[4])
