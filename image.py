@@ -9,7 +9,7 @@ This class is called from "Main.py", and process image data.
 
 methods:
 	processData(data) <- called from "Main.py"
-	
+
 	init()
 """
 
@@ -26,7 +26,7 @@ class Image:
 		#state.py
 		self.state = _state
 		#variables
-		
+
 
 
 	def init(self):
@@ -39,20 +39,18 @@ class Image:
 
 	#Set new data and Execute all functions
 	def processData(self,data):
-		
+
 		#if nomatch then nothing to do
 		if(data[0] == "nomatch"):
-			print("nomatch")
+			print("nomatch"),
 			return
-		
-		print("+"),
 
 		keypoints = []
 		for d in data:
 			if(d != ''):
 				keypoints.append(KeyPoint(d))
-		
+
 		#print(str(keypoints[0].x))
 		#print(str(keypoints[0].y))
 		#keypoints[0].descriptor.printData()
-		
+

@@ -5,18 +5,7 @@ state.py
 
 author: Keita Nagara (University of Tokyo)
 
-variables:
-	t, t1, t2, t3
-	x, x1
-	v, v1
-	a, a1
-	orientation
-
-methods:
-	getter
-	setter
-	localization()
-	init()
+This class is called from "sensor.py" and "image.py", and estimate state variables using particle filter.
 
 """
 
@@ -25,112 +14,67 @@ from math import *
 import cv2 as cv
 import numpy as np
 import KF
+from particle_filter import ParticleFilter
+from particle import Particle
 
 
 class State:
 
 	def __init__(self):
-		self.t = 0
-		self.t1 = 0
-		self.t2 = 0
-		self.t3 = 0
-		self.x = np.array([0.0,0.0,0.0])
-		self.x1 = np.array([0.0,0.0,0.0])
-		self.v = np.array([0.0,0.0,0.0])
-		self.v1 = np.array([0.0,0.0,0.0])
-		self.a = np.array([0.0,0.0,0.0])
-		self.a1 = np.array([0.0,0.0,0.0])
-		self.a2 = np.array([0.0,0.0,0.0])
-		self.a3 = np.array([0.0,0.0,0.0])
-		self.a4 = np.array([0.0,0.0,0.0])
-		self.orientation = np.array([0.0,0.0,0.0])
-		self.threshold = 0.05
+		self.init()
 
 
 	def init(self):
+		self.pf = ParticleFilter()
+		self.isFirstTime = True
+		self.M = 1 # パーティクルの数 num of particles
+		self.X = [] # パーティクルセット set of particles
 		self.t = 0
 		self.t1 = 0
-		self.t2 = 0
-		self.t3 = 0
-		self.x = np.array([0.0,0.0,0.0])
-		self.x1 = np.array([0.0,0.0,0.0])
-		self.v = np.array([0.0,0.0,0.0])
-		self.v1 = np.array([0.0,0.0,0.0])
-		self.a = np.array([0.0,0.0,0.0])
-		self.a1 = np.array([0.0,0.0,0.0])
-		self.a2 = np.array([0.0,0.0,0.0])
-		self.a3 = np.array([0.0,0.0,0.0])
-		self.a4 = np.array([0.0,0.0,0.0])
-		self.orientation = np.array([0.0,0.0,0.0])
-		self.threshold = 0.05
 
 
-	def setTime(self,time):
-		self.t3 = self.t2
-		self.t2 = self.t1
+	"""
+	This method is called from "sensor.py"
+	"""
+	def setSensorData(self, time, accel, ori):
+
 		self.t1 = self.t
 		self.t = time
 
-	def setAccel(self,accel):
-		self.a4 = self.a3
-		self.a3 = self.a2
-		self.a2 = self.a1
-		self.a1 = self.a
-		self.a = accel
+		if(self.isFirstTime):
+			# init particle
+			self.X = self.initParticle(accel, ori)
+		else:
+			# exec particle filter
+			self.X = self.pf.pf_step_IMU(self.X, self.t - self.t1, accel, ori, self.M)
 
-	def setOrientation(self,_orientation):
-		self.orientation = _orientation
+		if(self.isFirstTime):
+			self.isFirstTime = False
 
-	def getPosition(self):
-		return self.x
 
-	def getVelocity(self):
-		return self.v
+	def initParticle(self, accel, ori):
+		X = []
+		particle = Particle(accel, ori)
+		for i in range(self.M):
+			X.append(particle)
+		return X
 
-	def getAcceleration(self):
-		return self.a
 
-	def getOrientation(self):
-		return self.orientation
+	def getState(self):
+		x = []
+		v = []
+		a = []
+		o = []
+		for X_ in self.X:
+			x.append(X_.x)
+			v.append(X_.v)
+			a.append(X_.a)
+			o.append(X_.o)
+		return np.mean(x, axis=0),np.mean(v, axis=0),np.mean(a, axis=0),np.mean(o, axis=0)
+
 
 	def getTimeDelta(self):
 		return (self.t - self.t1)
-
-
-	#estimate position by simple Eq.
-	def simpleLocalization(self):
-
-		dt = self.t - self.t1
-		
-		if(self.t2 == 0):
-			pass
-		elif(self.t3 == 0):
-			self.v = dt*self.a1
-		else:
-			self.v1 = self.v
-			self.x1 = self.x
-			
-			#加速度がしきい値を下回る場合，速度と加速度をゼロとみなす
-			# t-1 ～ t-4 まで判定し，すべて下回る場合のみ実行
-			if(self.a1[0] < self.threshold and self.a1[0] > -self.threshold and self.a2[0] < self.threshold and self.a2[0] > -self.threshold and self.a3[0] < self.threshold and self.a3[0] > -self.threshold and self.a4[0] < self.threshold and self.a4[0] > -self.threshold):
-				self.v1[0] = 0.0
-				self.a1[0] = 0.0
-			if(self.a1[1] < self.threshold and self.a1[1] > -self.threshold and self.a2[1] < self.threshold and self.a2[1] > -self.threshold and self.a3[2] < self.threshold and self.a3[2] > -self.threshold and self.a4[2] < self.threshold and self.a4[2] > -self.threshold):
-				self.v1[1] = 0.0
-				self.a1[1] = 0.0
-			if(self.a1[2] < self.threshold and self.a1[2] > -self.threshold and self.a2[2] < self.threshold and self.a2[2] > -self.threshold and self.a3[2] < self.threshold and self.a3[2] > -self.threshold and self.a4[2] < self.threshold and self.a4[2] > -self.threshold):
-				self.v1[2] = 0.0
-				self.a1[2] = 0.0
-				
-			self.v = self.v1 + dt*self.a1
-			self.x = self.x1 + dt*self.v1 + 0.5*dt*dt*self.a1
-				
-
-
-	#Estimate position of device
-	#return position(x,y,z)
-	def localization(self):
-		self.simpleLocalization()
 
 
 

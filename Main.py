@@ -33,14 +33,19 @@ def on_connect(client, userdata, flags, rc):
 
 #This method is called when message is arrived.
 def on_message(client, userdata, msg):
-	global sensor, image, x, a
+	global state, sensor, image, x, a
 	data = str(msg.payload).split('&')
 	#Append data to the array
 	if(str(msg.topic) == "SLAM/input/camera"):
+		print("+"),
 		image.processData(data)
-		
+
 	elif(str(msg.topic) == "SLAM/input/all"):
+		print "*",
 		sensor.processData(data)
+		#x,v,a,o = state.getState()
+		#client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(o[0])+"&"+str(o[1])+"&"+str(o[2]))
+		"""
 		x = state.getPosition()
 		v = state.getVelocity()
 		a = state.getAcceleration()
@@ -57,7 +62,6 @@ def on_message(client, userdata, msg):
 		#temp1 = sensor.gyro
 		#temp2 = sensor.angularAccel
 
-		print "*",
 
 		#print '%0.2f %0.2f %0.2f' % (temp[0],temp[1],temp[2])
 
@@ -73,10 +77,12 @@ def on_message(client, userdata, msg):
 
 		client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(ori[0])+"&"+str(ori[1])+"&"+str(ori[2]))
 		#client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(ori[0])+"&"+str(ori[1])+"&"+str(ori[2])+"&"+str(temp1[0])+"&"+str(temp1[1])+"&"+str(temp1[2]))
+		"""
 
 	elif(str(msg.topic) == "SLAM/input/stop"):
 		print("[Main.py] stop")
 		client.publish("SLAM/output/stop","true")
+		state.init()
 		sensor.init()
 
 

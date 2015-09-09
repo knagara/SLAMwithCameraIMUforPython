@@ -9,13 +9,12 @@ This class is called from "Main.py", and process sensor data.
 
 methods:
 	processData(data) <- called from "Main.py"
-
+	
 	calcOrientation()
 	calcRotationMatrix()
-	#removeCentrifugalAndTangentialAccel()
+	removeCentrifugalAndTangentialAccel()
 	calcGlobalAcceleration()
-	pushDataToState()
-
+	
 	init()
 """
 
@@ -31,15 +30,42 @@ class Sensor:
 	def __init__(self,_state):
 		#state.py
 		self.state = _state
-		self.init()
+		#variables
+		self.isFirstTime = True
+		self.accel = np.array([])
+		self.accel1 = np.array([])
+		self.gravity = np.array([])
+		self.magnet = np.array([])
+		self.magnet_fixed = np.array([])
+		self.gyro = np.array([])
+		self.gyro_diff = np.array([])
+		self.orientation = np.array([0.0,0.0,0.0])
+		self.orientation_g = np.array([0.0,0.0,0.0])
+		self.orientation_gyro = np.array([0.0,0.0,0.0])
+		self.rotX_ = np.identity(3)
+		self.rotY_ = np.identity(3)
+		self.rotX = np.identity(3)
+		self.rotY = np.identity(3)
+		self.rotZ = np.identity(3)
+		self.rot = np.identity(3)
+		self.I = np.identity(3)
+		self.P = np.array([0.0,0.0,0.0]) # covariance matrix of KF for orientation
+		self.Q = np.diag([0.1,0.1,0.1]) # noise of KF for orientation
+		self.R = np.diag([0.01,0.01,0.01]) # noise of KF for orientation
+		self.centrifugal = np.array([0.0,0.0,0.0]) #
+		self.tangential = np.array([0.0,0.0,0.0]) #
+		self.r = np.array([0.0,0.0,0.0])
+		self.v = np.array([0.0,0.0,0.0])
+		self.v1 = np.array([0.0,0.0,0.0])
 
 
 	def init(self):
+		#state.py
+		self.state.init()
 		#variables
 		self.isFirstTime = True
-		self.time = 0.0
 		self.accel = np.array([])
-		self.accel_g = np.array([])
+		self.accel1 = np.array([])
 		self.gravity = np.array([])
 		self.magnet = np.array([])
 		self.magnet_fixed = np.array([])
@@ -69,18 +95,24 @@ class Sensor:
 	#Set new data and Execute all functions
 	def processData(self,data):
 
-		self.time = (float(long(data[0]) / 1000.0))
+		self.state.setTime(float(long(data[0]) / 1000.0))
+
+		if(self.isFirstTime==False):
+			self.accel1 = self.accel
 
 		self.accel = np.array([float(data[1]),float(data[2]),float(data[3])])
 		self.gravity = np.array([-float(data[4]),-float(data[5]),-float(data[6])])
 		self.magnet = np.array([float(data[7]),float(data[8]),float(data[9])])
 		self.gyro = np.array([float(data[10]),float(data[11]),float(data[12])])
-		#self.gyro_diff = np.array([float(data[13]),float(data[14]),float(data[15])])
+		self.gyro_diff = np.array([float(data[13]),float(data[14]),float(data[15])])
 
 		self.calcOrientation()
 		self.calcRotationMatrix()
-		self.calcGlobalAcceleration()
-		self.pushDataToState()
+
+		if(self.isFirstTime==False):
+			#self.removeCentrifugalAndTangentialAccel()
+			self.calcGlobalAcceleration()
+			self.state.localization()
 
 		if(self.isFirstTime):
 			self.isFirstTime = False
@@ -100,7 +132,7 @@ class Sensor:
 			resultKF = KF.execKF1(self.orientation_g, self.gyro, self.orientation, self.P, self.I, matrixGyro2Euler, self.I, self.Q, self.R)
 			self.orientation = resultKF[0]
 			self.P = resultKF[1]
-
+			
 			if(self.orientation[0]>=pi):
 				self.orientation[0] -= pi*2.0
 			if(self.orientation[1]>=pi):
@@ -113,9 +145,10 @@ class Sensor:
 				self.orientation[1] += pi*2.0
 			if(self.orientation[2]<-pi):
 				self.orientation[2] += pi*2.0
-
+		
 		self.calcOrientationByGyro()
 		self.orientation = self.orientation_gyro
+		self.state.setOrientation(self.orientation)
 
 
 	#Calc orientation by using gyro
@@ -207,10 +240,5 @@ class Sensor:
 	#Calc accel in global coordinates by using orientation
 	def calcGlobalAcceleration(self):
 		#accel in global = R(Z)R(Y)R(X) * accel
-		self.accel_g = np.dot(self.rot,self.accel)
-
-
-	#Push all data to State class
-	def pushDataToState(self):
-		self.state.setSensorData(self.time, self.accel_g, self.orientation)
+		self.state.setAccel(np.dot(self.rot,self.accel))
 

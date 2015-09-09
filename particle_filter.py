@@ -2,71 +2,73 @@
 """Particle Filter
 """
 
-import time
 import numpy
-import matplotlib.pyplot as plt
-
 
 class ParticleFilter:
 
 	def __init__(self):
 		pass
 
-	def f(self, x, u):
-	    """Transition model
+	def f(self, dt, X):
+	    """ Transition model
 	    - 状態方程式
-	        f(x, u) = A * x + B * u + w
-	        w ~ N(0, 2I)
-	    - AとBは単位ベクトル
+	        x_t = f(x_t-1) + w
+	        w ~ N(0, sigma)
 	    """
-	    # noise sigma=2
-	    w_mean = numpy.zeros(2)
-	    w_cov = numpy.eye(2) * 2.
-	    w = numpy.random.multivariate_normal(w_mean, w_cov)
+	    sigma_a = 0.5
+	    sigma_o = 0.1
 
-	    x_transition = numpy.dot(numpy.diag([1., 1.]), x) + numpy.dot(numpy.diag([1., 1.]), u) + w
+	    w_mean = numpy.zeros(3)
+	    w_cov_a = numpy.eye(3) * sigma_a
+	    w_a = numpy.random.multivariate_normal(w_mean, w_cov_a)
+	    w_cov_o = numpy.eye(3) * sigma_o
+	    w_o = numpy.random.multivariate_normal(w_mean, w_cov_o)
 
-	    return x_transition
+	    dt2 = dt*dt
+	    dt3 = dt*dt*dt
 
-	def g(self, x):
-	    """Obersvation model
-	    - 観測方程式
-	        g(x) = [|x-p1|, |x-p2|, |x-p3|, |x-p4|].T + v
-	        v ~ N(0, 4I)
-	    - ある4点からの距離
-	    """
-	    # observation points
-	    p1 = [0., 0.]; p2 = [10., 0.]; p3 = [0., 10.]; p4 = [10., 10.]
+	    X.x = X.x + dt*X.v + 0.5*dt2*X.a + 0.166666*dt3*w_a
+	    X.v = X.v + dt*X.a + 0.5*dt2*w_a
+	    X.a = X.a + dt*w_a
+	    X.o = X.o + dt*w_o
 
-	    # noise sigma=4
-	    v_mean = numpy.zeros(4)
-	    v_cov = numpy.eye(4) * 4.
-	    v = numpy.random.multivariate_normal(v_mean, v_cov)
+	    return X
 
-	    # observation vector
-	    y = numpy.array([numpy.linalg.norm(x - p1),
-	                     numpy.linalg.norm(x - p2),
-	                     numpy.linalg.norm(x - p3),
-	                     numpy.linalg.norm(x - p4)]) + v
-
-	    return y
-
-	def likelihood(self, y, x):
-	    """Likelihood function
+	def likelihood_IMU(self, accel, ori, X):
+	    """ Likelihood function
 	    - 尤度関数
-	        p(y|x) ~ exp(|y-g_(x)|**2 / simga**2)
-	    - g_は誤差なしの観測方程式とする
-	    - v ~ N(0, 4I)としたのでsigma**2=4
-	    - 尤度 = 推定値と観測値との類似度
-	    - アプリケーションによって適切に決めないといけない
-	    - 物体追跡だと色情報を使ったりするかも
+	        p(y|x) ~ exp(-1/2 * (|y-h(x)|.t * sigma * |y-h(x)|)
+	    - 観測モデル
+	    	z = h(x) + v
+	    	v ~ N(0, sigma)
+	    Parameters
+	    ----------
+	    accel : 観測 (加速度) Observation set (accel)
+	    ori : 観測 (姿勢) Observation set (orientation)
+	    X : 予測　Predicted particle
+	    Returns
+	    -------
+	    likelihood : 尤度 Likelihood
 	    """
-	    p1 = [0., 0.]; p2 = [10., 0.]; p3 = [0., 10.]; p4 = [10., 10.]
-	    g_ = lambda x: numpy.array([numpy.linalg.norm(x - p1), numpy.linalg.norm(x - p2), numpy.linalg.norm(x - p3), numpy.linalg.norm(x - p4)])
-	    return numpy.exp(-numpy.dot(y - g_(x), y - g_(x)) / 4)
+	    sigma_a_inv = 2.0 # 1.0 / 0.5
+	    sigma_o_inv = 10.0 # 1.0 / 0.1
+	    v_cov_a = numpy.eye(3) * sigma_a_inv # inv of Sigma
+	    v_cov_o = numpy.eye(3) * sigma_o_inv # inv of Sigma
+
+	    y_X_a = accel - X.a # y - X (accel)
+	    y_X_o = ori - X.o # y - X (orientation)
+
+	    print(ori)
+	    print(X.o)
+	    print(y_X_o)
+	    print(numpy.dot(y_X_a, numpy.dot(v_cov_a, y_X_a)) + numpy.dot(y_X_o, numpy.dot(v_cov_o, y_X_o)))
+
+	    print(-0.5 * (numpy.dot(y_X_a, numpy.dot(v_cov_a, y_X_a)) + numpy.dot(y_X_o, numpy.dot(v_cov_o, y_X_o))))
+
+	    return numpy.exp(-0.5 * (numpy.dot(y_X_a, numpy.dot(v_cov_a, y_X_a)) + numpy.dot(y_X_o, numpy.dot(v_cov_o, y_X_o))))
 
 	def resampling(self, X, W, M):
-	    """Resampling
+	    """ Resampling
 	    - 等間隔サンプリング
 	    M : パーティクルの数 num of particles
 	    """
@@ -81,6 +83,39 @@ class ParticleFilter:
 	            i += 1
 	            c += W[i]
 	        X_resampled.append(X[i])
+	    return X_resampled
+
+	def pf_step_IMU(self, X, dt, accel, ori, M):
+	    """ One Step of Sampling Importance Resampling for Particle Filter
+	    	for IMU sensor
+	    Parameters
+	    ----------
+	    X : 状態 List of state set
+	    dt: 時刻の差分 delta of time
+	    accel : 観測 (加速度) Observation set (accel)
+	    ori : 観測 (姿勢) Observation set (orientation)
+	    M : パーティクルの数 num of particles
+	    Returns
+	    -------
+	    X_resampled : 次の状態 List updated state
+	    """
+
+	    # 初期化
+	    X_predicted = range(M)
+	    weight = range(M)
+
+	    for i in range(M):
+	        # 推定 prediction
+	        X_predicted[i] = self.f(dt, X[i])
+	        # 更新 update
+	        weight[i] = self.likelihood_IMU(accel, ori, X_predicted[i])
+	    # 正規化 normalization
+	    weight_sum = sum(weight) # 総和 the sum of weights
+	    for i in range(M):
+	        weight[i] /= weight_sum
+	    # リサンプリング re-sampling (if necessary)
+	    X_resampled = self.resampling(X_predicted, weight, M)
+
 	    return X_resampled
 
 	def pf_step(self, X, u, y, N):
