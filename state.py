@@ -27,7 +27,7 @@ class State:
 	def init(self):
 		self.pf = ParticleFilter()
 		self.isFirstTime = True
-		self.M = 1 # パーティクルの数 num of particles
+		self.M = 100 # パーティクルの数 num of particles
 		self.X = [] # パーティクルセット set of particles
 		self.t = 0
 		self.t1 = 0

@@ -42,7 +42,7 @@ class Image:
 
 		#if nomatch then nothing to do
 		if(data[0] == "nomatch"):
-			print("nomatch"),
+			#print("nomatch"),
 			return
 
 		keypoints = []

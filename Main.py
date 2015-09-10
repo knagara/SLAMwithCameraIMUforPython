@@ -12,13 +12,9 @@ and then it calls methods of "sensor.py".
 
 FYI:
 MQTT is one of the lightweight messaging protocols.
-If you want to run this program, you must prepare your own server and install MQTT broker, and make "server.conf" on the parent directory. "server.conf" is the file like "hostIPaddress&portNumber&username&password".
+If you want to run this program, you must prepare your own server and install MQTT broker, and make "server.conf" on the parent directory of this file. "server.conf" is the file like "hostIPaddress&portNumber&username&password".
 """
 
-import sys
-from math import *
-import cv2
-import numpy as np
 import paho.mqtt.client as mqtt
 from sensor import Sensor
 from state import State
@@ -33,52 +29,22 @@ def on_connect(client, userdata, flags, rc):
 
 #This method is called when message is arrived.
 def on_message(client, userdata, msg):
-	global state, sensor, image, x, a
+	global state, sensor, image
 	data = str(msg.payload).split('&')
 	#Append data to the array
 	if(str(msg.topic) == "SLAM/input/camera"):
 		print("+"),
 		image.processData(data)
+		print "|",
 
 	elif(str(msg.topic) == "SLAM/input/all"):
 		print "*",
 		sensor.processData(data)
 		x,v,a,o = state.getState()
 		client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(o[0])+"&"+str(o[1])+"&"+str(o[2]))
-		print "|",
-		"""
-		x = state.getPosition()
-		v = state.getVelocity()
-		a = state.getAcceleration()
-		#a = sensor.accel #
-		ori = state.getOrientation()
-		#temp
-		#temp1 = sensor.orientation #
-		#temp2 = sensor.orientation_gyro #
-		#temp3 = sensor.orientation_g #
-		temp1 = sensor.centrifugal
-		temp2 = sensor.tangential
-		#temp3 = sensor.accel
-		temp3 = sensor.r
-		#temp1 = sensor.gyro
-		#temp2 = sensor.angularAccel
-
-
-		#print '%0.2f %0.2f %0.2f' % (temp[0],temp[1],temp[2])
-
 		client.publish("SLAM/output/accel",str(a[0])+"&"+str(a[1])+"&"+str(a[2]))
-		#client.publish("SLAM/output/accel",str(a[0])+"&"+str(a[1])+"&"+str(a[2])+"&"+str(a_[0])+"&"+str(a_[1])+"&"+str(a_[2]))
-
 		client.publish("SLAM/output/velocity",str(v[0])+"&"+str(v[1])+"&"+str(v[2]))
-
-		#client.publish("SLAM/output/temp",str(temp[0])+"&"+str(temp[1])+"&"+str(temp[2]))
-		#client.publish("SLAM/output/temp",str(temp1[0])+"&"+str(temp1[1])+"&"+str(temp1[2])+"&"+str(temp2[0])+"&"+str(temp2[1])+"&"+str(temp2[2]))
-		client.publish("SLAM/output/temp",str(temp1[0])+"&"+str(temp1[1])+"&"+str(temp1[2])+"&"+str(temp2[0])+"&"+str(temp2[1])+"&"+str(temp2[2])+"&"+str(temp3[0])+"&"+str(temp3[1])+"&"+str(temp3[2]))
-
-
-		client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(ori[0])+"&"+str(ori[1])+"&"+str(ori[2]))
-		#client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(ori[0])+"&"+str(ori[1])+"&"+str(ori[2])+"&"+str(temp1[0])+"&"+str(temp1[1])+"&"+str(temp1[2]))
-		"""
+		print ",",
 
 	elif(str(msg.topic) == "SLAM/input/stop"):
 		print("[Main.py] stop")
@@ -98,12 +64,6 @@ if __name__ == '__main__':
 	sensor = Sensor(state)
 	#image.py
 	image = Image(state)
-	#position of device
-	x = np.array([0.0,0.0,0.0])
-	#orientation of device
-	ori = np.array([0.0,0.0,0.0])
-	#acceleration of device
-	a = np.array([0.0,0.0,0.0])
 
 	#Read server conf file
 	f = open('../server.conf', 'r')

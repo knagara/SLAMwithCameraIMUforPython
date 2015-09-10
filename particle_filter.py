@@ -16,8 +16,8 @@ class ParticleFilter:
 	        x_t = f(x_t-1) + w
 	        w ~ N(0, sigma)
 	    """
-	    sigma_a = 0.5
-	    sigma_o = 0.1
+	    sigma_a = 0.001
+	    sigma_o = 0.001
 
 	    w_mean = numpy.zeros(3)
 	    w_cov_a = numpy.eye(3) * sigma_a
@@ -52,10 +52,10 @@ class ParticleFilter:
 	    -------
 	    likelihood : 尤度 Likelihood
 	    """
-	    sigma_a_inv = 2.0 # 1.0 / 0.5
-	    sigma_o_inv = 10.0 # 1.0 / 0.1
-	    v_cov_a = numpy.eye(3) * sigma_a_inv # inv of Sigma
-	    v_cov_o = numpy.eye(3) * sigma_o_inv # inv of Sigma
+	    sigma_a_inv = 1000.0 # 1.0 / sigma_a
+	    sigma_o_inv = 1000.0 # 1.0 / sigma_o
+	    v_cov_a = numpy.eye(3) * sigma_a_inv # inv of covariance matrix
+	    v_cov_o = numpy.eye(3) * sigma_o_inv # inv of covariance matrix
 
 	    y_X_a = accel - X.a # y - X (accel)
 	    y_X_o = ori - X.o # y - X (orientation)
