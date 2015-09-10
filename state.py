@@ -73,8 +73,4 @@ class State:
 		return np.mean(x, axis=0),np.mean(v, axis=0),np.mean(a, axis=0),np.mean(o, axis=0)
 
 
-	def getTimeDelta(self):
-		return (self.t - self.t1)
-
-
 

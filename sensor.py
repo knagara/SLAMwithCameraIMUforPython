@@ -38,6 +38,7 @@ class Sensor:
 		#variables
 		self.isFirstTime = True
 		self.time = 0.0
+		self.time1 = 0.0
 		self.accel = np.array([])
 		self.accel_g = np.array([])
 		self.gravity = np.array([])
@@ -69,6 +70,7 @@ class Sensor:
 	#Set new data and Execute all functions
 	def processData(self,data):
 
+		self.time1 = self.time
 		self.time = (float(long(data[0]) / 1000.0))
 
 		self.accel = np.array([float(data[1]),float(data[2]),float(data[3])])
@@ -93,7 +95,7 @@ class Sensor:
 		if(self.isFirstTime):
 			self.orientation = self.orientation_g
 		else:
-			t = self.state.getTimeDelta()
+			t = self.time - self.time1
 			matrixGyro2Euler = Util.matrixGyro2Euler(self.orientation[0],self.orientation[1]) * t
 
 			#Kalman Filter
@@ -123,7 +125,7 @@ class Sensor:
 		if(self.isFirstTime):
 			self.orientation_gyro = self.orientation_g
 		else:
-			t = self.state.getTimeDelta()
+			t = self.time - self.time1
 			gyroEuler = np.dot(Util.matrixGyro2Euler(self.orientation_gyro[0],self.orientation_gyro[1]),self.gyro)
 			self.orientation_gyro = self.orientation_gyro + gyroEuler * t
 

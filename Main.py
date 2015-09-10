@@ -43,8 +43,9 @@ def on_message(client, userdata, msg):
 	elif(str(msg.topic) == "SLAM/input/all"):
 		print "*",
 		sensor.processData(data)
-		#x,v,a,o = state.getState()
-		#client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(o[0])+"&"+str(o[1])+"&"+str(o[2]))
+		x,v,a,o = state.getState()
+		client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(o[0])+"&"+str(o[1])+"&"+str(o[2]))
+		print "|",
 		"""
 		x = state.getPosition()
 		v = state.getVelocity()

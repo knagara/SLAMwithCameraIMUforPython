@@ -8,6 +8,7 @@ class ParticleFilter:
 
 	def __init__(self):
 		pass
+	
 
 	def f(self, dt, X):
 	    """ Transition model
@@ -33,6 +34,7 @@ class ParticleFilter:
 	    X.o = X.o + dt*w_o
 
 	    return X
+					
 
 	def likelihood_IMU(self, accel, ori, X):
 	    """ Likelihood function
@@ -57,15 +59,9 @@ class ParticleFilter:
 
 	    y_X_a = accel - X.a # y - X (accel)
 	    y_X_o = ori - X.o # y - X (orientation)
-
-	    print(ori)
-	    print(X.o)
-	    print(y_X_o)
-	    print(numpy.dot(y_X_a, numpy.dot(v_cov_a, y_X_a)) + numpy.dot(y_X_o, numpy.dot(v_cov_o, y_X_o)))
-
-	    print(-0.5 * (numpy.dot(y_X_a, numpy.dot(v_cov_a, y_X_a)) + numpy.dot(y_X_o, numpy.dot(v_cov_o, y_X_o))))
-
+					
 	    return numpy.exp(-0.5 * (numpy.dot(y_X_a, numpy.dot(v_cov_a, y_X_a)) + numpy.dot(y_X_o, numpy.dot(v_cov_o, y_X_o))))
+					
 
 	def resampling(self, X, W, M):
 	    """ Resampling
@@ -84,6 +80,7 @@ class ParticleFilter:
 	            c += W[i]
 	        X_resampled.append(X[i])
 	    return X_resampled
+					
 
 	def pf_step_IMU(self, X, dt, accel, ori, M):
 	    """ One Step of Sampling Importance Resampling for Particle Filter
@@ -117,6 +114,7 @@ class ParticleFilter:
 	    X_resampled = self.resampling(X_predicted, weight, M)
 
 	    return X_resampled
+					
 
 	def pf_step(self, X, u, y, N):
 	    """One Step of Sampling Importance Resampling for Particle Filter
