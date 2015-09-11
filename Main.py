@@ -54,7 +54,6 @@ def on_message(client, userdata, msg):
 
 
 
-
 #Main method
 if __name__ == '__main__':
 
