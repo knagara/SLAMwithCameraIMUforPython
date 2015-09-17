@@ -3,11 +3,17 @@
 """
 
 import numpy
+import math
 
 class ParticleFilter:
 
 	def __init__(self):
-		pass
+		self.var_sys = 1.0
+		self.var_obs = 1.0
+		
+	def setParameter(self, param1, param2):
+		self.var_sys = param1 * param2
+		self.var_obs = param1
 	
 
 	def f(self, dt, X):
@@ -16,13 +22,11 @@ class ParticleFilter:
 	        x_t = f(x_t-1) + w
 	        w ~ N(0, sigma)
 	    """
-	    sigma_a = 0.001
-	    sigma_o = 0.001
 
 	    w_mean = numpy.zeros(3)
-	    w_cov_a = numpy.eye(3) * sigma_a
+	    w_cov_a = numpy.eye(3) * self.var_sys
 	    w_a = numpy.random.multivariate_normal(w_mean, w_cov_a)
-	    w_cov_o = numpy.eye(3) * sigma_o
+	    w_cov_o = numpy.eye(3) * self.var_sys
 	    w_o = numpy.random.multivariate_normal(w_mean, w_cov_o)
 
 	    dt2 = dt*dt
@@ -52,15 +56,16 @@ class ParticleFilter:
 	    -------
 	    likelihood : 尤度 Likelihood
 	    """
-	    sigma_a_inv = 1000.0 # 1.0 / sigma_a
-	    sigma_o_inv = 1000.0 # 1.0 / sigma_o
+	    sigma_a_inv = 1.0/self.var_obs # 1.0 / sigma_a
+	    sigma_o_inv = 1.0/self.var_obs # 1.0 / sigma_o
 	    v_cov_a = numpy.eye(3) * sigma_a_inv # inv of covariance matrix
 	    v_cov_o = numpy.eye(3) * sigma_o_inv # inv of covariance matrix
 
 	    y_X_a = accel - X.a # y - X (accel)
 	    y_X_o = ori - X.o # y - X (orientation)
 					
-	    return numpy.exp(-0.5 * (numpy.dot(y_X_a, numpy.dot(v_cov_a, y_X_a)) + numpy.dot(y_X_o, numpy.dot(v_cov_o, y_X_o))))
+	    return numpy.exp(-0.5 * (numpy.dot(y_X_a, numpy.dot(v_cov_a, y_X_a)) + numpy.dot(y_X_o, numpy.dot(v_cov_o, y_X_o)))) / (((2*math.pi)**3) * math.sqrt(self.var_obs*6))
+	    #return numpy.exp(-0.5 * (numpy.dot(y_X_a, numpy.dot(v_cov_a, y_X_a)) + numpy.dot(y_X_o, numpy.dot(v_cov_o, y_X_o))))
 					
 
 	def resampling(self, X, W, M):
@@ -113,7 +118,7 @@ class ParticleFilter:
 	    # リサンプリング re-sampling (if necessary)
 	    X_resampled = self.resampling(X_predicted, weight, M)
 
-	    return X_resampled
+	    return X_resampled, weight_sum
 					
 
 	def pf_step(self, X, u, y, N):

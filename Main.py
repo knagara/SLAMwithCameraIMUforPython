@@ -33,18 +33,20 @@ def on_message(client, userdata, msg):
 	data = str(msg.payload).split('&')
 	#Append data to the array
 	if(str(msg.topic) == "SLAM/input/camera"):
-		print("+"),
+		#print("+"),
 		image.processData(data)
-		print "|",
+		#print "|",
 
 	elif(str(msg.topic) == "SLAM/input/all"):
-		print "*",
+		#print "*",
 		sensor.processData(data)
 		x,v,a,o = state.getState()
+		a_temp = sensor.accel_g
 		client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(o[0])+"&"+str(o[1])+"&"+str(o[2]))
 		client.publish("SLAM/output/accel",str(a[0])+"&"+str(a[1])+"&"+str(a[2]))
 		client.publish("SLAM/output/velocity",str(v[0])+"&"+str(v[1])+"&"+str(v[2]))
-		print ",",
+		client.publish("SLAM/output/temp",str(a[0])+"&"+str(a[1])+"&"+str(a[2])+"&"+str(a_temp[0])+"&"+str(a_temp[1])+"&"+str(a_temp[2]))
+		#print ",",
 
 	elif(str(msg.topic) == "SLAM/input/stop"):
 		print("[Main.py] stop")

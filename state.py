@@ -10,7 +10,7 @@ This class is called from "sensor.py" and "image.py", and estimate state variabl
 """
 
 import sys
-from math import *
+import math
 import cv2 as cv
 import numpy as np
 import KF
@@ -26,15 +26,21 @@ class State:
 
 	def init(self):
 		self.pf = ParticleFilter()
+		self.pf.setParameter(math.pow(2,-8) , math.pow(10,-4)) #パーティクルフィルタのパラメータ（ノイズの分散）
 		self.isFirstTime = True
 		self.M = 100 # パーティクルの数 num of particles
 		self.X = [] # パーティクルセット set of particles
 		self.t = 0
 		self.t1 = 0
+		self.loglikelihood = 0.0
+		self.count = 0
 
 
 	"""
-	This method is called from "sensor.py"
+	This method is called from "sensor.py" when new IMU sensor data are arrived.
+	time : time (sec)
+	accel : acceleration in global coordinates
+	ori : orientaion
 	"""
 	def setSensorData(self, time, accel, ori):
 
@@ -46,7 +52,11 @@ class State:
 			self.X = self.initParticle(accel, ori)
 		else:
 			# exec particle filter
-			self.X = self.pf.pf_step_IMU(self.X, self.t - self.t1, accel, ori, self.M)
+			self.X, likelihood = self.pf.pf_step_IMU(self.X, self.t - self.t1, accel, ori, self.M)
+			self.loglikelihood += math.log(likelihood)
+			self.count += 1
+			if(self.count==300):
+				print(str(self.loglikelihood))	
 
 		if(self.isFirstTime):
 			self.isFirstTime = False
