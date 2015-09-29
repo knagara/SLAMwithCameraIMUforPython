@@ -2,6 +2,7 @@
 
 import numpy as np
 
+
 def execKF1Simple(Y, mu0, Sigma0, A, C, Q, R):
     '''Linear Kalman Filter
 
