@@ -7,6 +7,17 @@ import numpy as np
 def lowPassFilter(value,newValue,alpha):
 	value = value * alpha + newValue * (1 - alpha)
 	return value
+	
+"""
+High-pass filter
+ - newValues 新しい値
+ - lowValue 前回の低周波領域値が渡され、今回の低周波領域値が格納される配列
+ - value ハイパスフィルタ適用後の値が格納される配列
+"""
+def highPassFilter(newValues, lowValue, alpha):
+	lowValue = alpha * lowValue + (1 - alpha) * newValues
+	value = newValues - lowValue
+	return value, lowValue
 
 def matrixGyro2Euler(x,y):
 	#回転行列

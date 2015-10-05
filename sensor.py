@@ -19,9 +19,7 @@ methods:
 	init()
 """
 
-import sys
 from math import *
-import cv2 as cv
 import numpy as np
 import Util
 import KF
@@ -117,7 +115,7 @@ class Sensor:
 				self.orientation[2] += pi*2.0
 
 		self.calcOrientationByGyro()
-		self.orientation = self.orientation_gyro
+		self.orientation = self.orientation_g
 
 
 	#Calc orientation by using gyro
