@@ -39,7 +39,7 @@ class Sensor:
 		self.time1 = 0.0
 		self.accel = np.array([])
 		self.accel_g = np.array([])
-		self.gravity = np.array([])
+		self.gravity = np.array([]) #
 		self.magnet = np.array([])
 		self.magnet_fixed = np.array([])
 		self.gyro = np.array([])
@@ -72,7 +72,7 @@ class Sensor:
 		self.time = (float(long(data[0]) / 1000.0))
 
 		self.accel = np.array([float(data[1]),float(data[2]),float(data[3])])
-		self.gravity = np.array([-float(data[4]),-float(data[5]),-float(data[6])])
+		self.orientation_g = np.array([float(data[4]),float(data[5]),float(data[6])])
 		self.magnet = np.array([float(data[7]),float(data[8]),float(data[9])])
 		self.gyro = np.array([float(data[10]),float(data[11]),float(data[12])])
 		#self.gyro_diff = np.array([float(data[13]),float(data[14]),float(data[15])])
@@ -88,8 +88,8 @@ class Sensor:
 
 	#Calc orientation
 	def calcOrientation(self):
+		"""
 		self.calcOrientationByGravity()
-
 		if(self.isFirstTime):
 			self.orientation = self.orientation_g
 		else:
@@ -115,6 +115,7 @@ class Sensor:
 				self.orientation[2] += pi*2.0
 
 		self.calcOrientationByGyro()
+		"""
 		self.orientation = self.orientation_g
 
 
@@ -149,12 +150,14 @@ class Sensor:
 		#x roll
 		self.orientation_g[0] = atan2(self.gravity[1],self.gravity[2])
 		#y pitch (-90 ～ +90)
-		#self.orientation_g[1] = atan2(-self.gravity[0],hypot(self.gravity[1],self.gravity[2]))
+		self.orientation_g[1] = atan2(-self.gravity[0],hypot(self.gravity[1],self.gravity[2]))
 		#y pitch (-180 ～ +180)
+		"""
 		if(self.gravity[2]<0): #decided by z axis
 			self.orientation_g[1] = atan2(-self.gravity[0],-hypot(self.gravity[1],self.gravity[2]))
 		else:
 			self.orientation_g[1] = atan2(-self.gravity[0],hypot(self.gravity[1],self.gravity[2]))
+		"""
 		#z yaw
 		self.rotX_ = Util.rotationMatrixX(self.orientation_g[0])
 		self.rotY_ = Util.rotationMatrixY(self.orientation_g[1])
