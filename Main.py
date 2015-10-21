@@ -26,7 +26,7 @@ def main():
 	global state, sensor, image
 	
 	#state.py
-	state = State().getStateClass("IMUKF") #Select state type (&estimateion model).
+	state = State().getStateClass("IMUPF2") #Select state type (&estimateion model).
 	#sensor.py
 	sensor = Sensor(state)
 	#image.py
