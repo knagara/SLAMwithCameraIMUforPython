@@ -2,6 +2,10 @@
 """
 Particle Filter
 (IMUPF model version)
+
+Difference between IMUPF and IMUPF2:
+IMUPF -> IMU data is regarded as observation
+IMUPF2 -> IMU data is regarded as control
 """
 
 import numpy
@@ -25,11 +29,11 @@ class ParticleFilterIMU:
 	        w ~ N(0, sigma)
 	    """
 
-	    w_mean = numpy.zeros(3)
-	    w_cov_a = numpy.eye(3) * self.var_sys
-	    w_a = numpy.random.multivariate_normal(w_mean, w_cov_a)
-	    w_cov_o = numpy.eye(3) * self.var_sys
-	    w_o = numpy.random.multivariate_normal(w_mean, w_cov_o)
+	    w_mean = numpy.zeros(3) # mean of noise
+	    w_cov_a = numpy.eye(3) * self.var_sys # covariance matrix of noise (accel)
+	    w_a = numpy.random.multivariate_normal(w_mean, w_cov_a) # generate random
+	    w_cov_o = numpy.eye(3) * self.var_sys # covariance matrix of noise (ori)
+	    w_o = numpy.random.multivariate_normal(w_mean, w_cov_o) # generate random
 
 	    dt2 = dt*dt
 	    dt3 = dt*dt*dt
@@ -120,4 +124,4 @@ class ParticleFilterIMU:
 	    # リサンプリング re-sampling (if necessary)
 	    X_resampled = self.resampling(X_predicted, weight, M)
 
-	    return X_resampled, weight_sum
+	    return X_resampled

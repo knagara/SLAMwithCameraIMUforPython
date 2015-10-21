@@ -6,7 +6,7 @@ state.py
 author: Keita Nagara (University of Tokyo)
 
 This class is called from "sensor.py" and "image.py", and estimate state variables.
-This class is factory class. State type (& estimation model) is selected by argment.
+This class is factory class. Model (state type & estimation model) is selected by argment.
 
 """
 

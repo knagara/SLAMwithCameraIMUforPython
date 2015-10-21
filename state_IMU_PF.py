@@ -37,7 +37,7 @@ class StateIMUPF:
 		
 	def initParticleFilter(self,PFtype):
 		self.pf = ParticleFilter().getParticleFilterClass(PFtype) #PFtype = "IMUPF" or "IMUPF2"
-		self.pf.setParameter(math.pow(2,-8) , math.pow(10,-4)) #パーティクルフィルタのパラメータ（ノイズの分散） variance of noise
+		self.pf.setParameter(math.pow(10,-10) , math.pow(10,-10)) #パーティクルフィルタのパラメータ（ノイズの分散） variance of noise
 		self.M = 100 # パーティクルの数 num of particles
 		self.X = [] # パーティクルセット set of particles
 		self.loglikelihood = 0.0
@@ -69,11 +69,14 @@ class StateIMUPF:
 			self.X = self.initParticle(accel, ori)
 		else:
 			# exec particle filter
+			self.X = self.pf.pf_step(self.X, self.t - self.t1, accel, ori, self.M)
+			""" The code below is used to get loglikelihood to decide parameters.
 			self.X, likelihood = self.pf.pf_step(self.X, self.t - self.t1, accel, ori, self.M)
 			self.loglikelihood += math.log(likelihood)
 			self.count += 1
 			if(self.count==300):
 				print(str(self.loglikelihood))	
+			"""
 
 		if(self.isFirstTime):
 			self.isFirstTime = False
