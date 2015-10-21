@@ -14,11 +14,13 @@ from state_IMU_KF import StateIMUKF
 
 class State:
 
-	def __init__(self,stateType):
+	def __init__(self):
+		pass
+	
+	def getStateClass(self,stateType):
 		if(stateType=="IMUKF"):
 			return StateIMUKF()
 		elif(stateType=="IMUPF"):
 			pass
 		else:
 			pass
-
