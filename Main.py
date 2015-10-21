@@ -60,7 +60,7 @@ def on_message(client, userdata, msg):
 if __name__ == '__main__':
 
 	#state.py
-	state = State()
+	state = State("IMUKF")
 	#sensor.py
 	sensor = Sensor(state)
 	#image.py
