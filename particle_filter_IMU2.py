@@ -40,8 +40,8 @@ class ParticleFilterIMU2:
     
         X.x = X.x + dt*X.v + 0.5*dt2*X.a
         X.v = X.v + dt*X.a
-        X.a = accel + dt*w_a
-        X.o = ori + dt*w_o
+        X.a = accel
+        X.o = ori
         """
         X.x = X.x + dt*X.v + 0.5*dt2*X.a + 0.166666*dt3*w_a
         X.v = X.v + dt*X.a + 0.5*dt2*w_a

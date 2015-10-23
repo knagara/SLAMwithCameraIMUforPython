@@ -29,8 +29,8 @@ class StateIMUPF:
 
 	def init(self):
 		self.isFirstTime = True
-		self.t = 0
-		self.t1 = 0
+		self.t = 0.0
+		self.t1 = 0.0
 		
 		self.initParticleFilter(self.PFtype)
 		

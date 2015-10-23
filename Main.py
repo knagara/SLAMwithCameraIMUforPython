@@ -21,30 +21,20 @@ from state import State
 from image import Image
 
 
-#Main method
+# Main method
 def main():
 	global state, sensor, image
 	
-	#state.py
-	state = State().getStateClass("IMUPF2") #Select model (state type & estimation model).
+	# Select model (state type & estimation model)
+	# - IMUKF (IMU with Kalman Filter)
+	# - IMUPF (IMU with Particle Filter, IMU data is observation)
+	# - IMUPF2 (IMU with Particle Filter, IMU data is control)
+	state = State().getStateClass("IMUPF2")
 	#sensor.py
 	sensor = Sensor(state)
 	#image.py
 	image = Image(state)
-
-	#Read server conf file
-	f = open('../server.conf', 'r')
-	for line in f:
-		serverconf = line
-	f.close()
-
-	#Mqtt connection args
-	conf = serverconf.split('&')
-	host = conf[0]
-	port = int(conf[1])
-	username = conf[2]
-	password = conf[3]
-
+	
 
 	#This method is called when mqtt is connected.
 	def on_connect(client, userdata, flags, rc):
@@ -63,19 +53,19 @@ def main():
 			#print("+"),
 			image.processData(data) #Process data
 			#print "|",
-	
+			
 		elif(str(msg.topic) == "SLAM/input/all"): #sensor.py
 			#print "*",
 			sensor.processData(data) #Process data
 			
 			x,v,a,o = state.getState() #Get estimated state vector
-			a_temp = sensor.accel
+			a_temp = sensor.accel_g
 			
 			#Publish estimated state vector to MQTT broker
 			client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(o[0])+"&"+str(o[1])+"&"+str(o[2]))
 			client.publish("SLAM/output/accel",str(a[0])+"&"+str(a[1])+"&"+str(a[2]))
 			client.publish("SLAM/output/velocity",str(v[0])+"&"+str(v[1])+"&"+str(v[2]))
-			client.publish("SLAM/output/temp",str(o[0])+"&"+str(o[1])+"&"+str(o[2])+"&"+str(a_temp[0])+"&"+str(a_temp[1])+"&"+str(a_temp[2]))
+			client.publish("SLAM/output/temp",str(a[0])+"&"+str(a[1])+"&"+str(a[2])+"&"+str(a_temp[0])+"&"+str(a_temp[1])+"&"+str(a_temp[2]))
 			#print ",",
 	
 		elif(str(msg.topic) == "SLAM/input/stop"): #Stop
@@ -85,6 +75,19 @@ def main():
 			sensor.init()
 
 
+	#Read server conf file
+	f = open('../server.conf', 'r')
+	for line in f:
+		serverconf = line
+	f.close()
+
+	#Mqtt connection args
+	conf = serverconf.split('&')
+	host = conf[0]
+	port = int(conf[1])
+	username = conf[2]
+	password = conf[3]
+	
 	#Mqtt connect
 	client = mqtt.Client(client_id="PyMain", clean_session=True, protocol=mqtt.MQTTv311)
 	client.on_connect = on_connect
