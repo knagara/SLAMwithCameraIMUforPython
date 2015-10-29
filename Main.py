@@ -26,14 +26,19 @@ def main():
 	global state, sensor, image
 	
 	# Select model (state type & estimation model)
+	# - Coplanarity (IMU with Kalman Filter & Camera with Particle Filter. Observation model is coplanarity. State vector is device state only)
+	# - RBPF (FastSLAM. IMU with Particle Filter & Camera with Extended Kalman Filter. Observation model is inverse depth. State vector are device and landmark state. Estimated by Rao-Blackwellized particle filter)
 	# - IMUKF (IMU with Kalman Filter)
 	# - IMUPF (IMU with Particle Filter, IMU data is observation)
 	# - IMUPF2 (IMU with Particle Filter, IMU data is control)
-	state = State().getStateClass("IMUPF2")
+	model = "Coplanarity"
+	
+	state = State().getStateClass("IMUPF2") # Select model
 	#sensor.py
 	sensor = Sensor(state)
 	#image.py
-	image = Image(state)
+	image = Image().getImageClass(model) # Select model
+	image.setState(state)
 	
 
 	#This method is called when mqtt is connected.

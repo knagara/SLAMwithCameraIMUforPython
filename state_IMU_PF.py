@@ -37,7 +37,7 @@ class StateIMUPF:
 		
 	def initParticleFilter(self,PFtype):
 		self.pf = ParticleFilter().getParticleFilterClass(PFtype) #PFtype = "IMUPF" or "IMUPF2"
-		self.pf.setParameter(math.pow(10,-10) , math.pow(10,-10)) #パーティクルフィルタのパラメータ（ノイズの分散） variance of noise
+		self.pf.setParameter(math.pow(10,-2) , math.pow(10,-3)) #パーティクルフィルタのパラメータ（ノイズの分散） variance of noise
 		self.M = 100 # パーティクルの数 num of particles
 		self.X = [] # パーティクルセット set of particles
 		self.loglikelihood = 0.0
