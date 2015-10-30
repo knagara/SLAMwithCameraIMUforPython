@@ -48,8 +48,5 @@ class ImageCoplanarity:
 			if(d != ''):
 				keypoints.append(KeyPointPair(d))
 
-		print(str(keypoints[0].x1)),
-		print(str(keypoints[0].y1)),
-		print(str(keypoints[0].x2)),
-		print(str(keypoints[0].y2))
+		self.state.setImageData(keypoints)
 

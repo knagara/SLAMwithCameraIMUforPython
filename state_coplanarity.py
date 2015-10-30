@@ -12,6 +12,7 @@ This class is generated from "state.py".
 """
 
 import sys
+import time
 import math
 import cv2 as cv
 import numpy as np
@@ -25,8 +26,10 @@ class StateCoplanarity:
 
 	def init(self):
 		self.isFirstTimeIMU = True
-		self.t = 0
-		self.t1 = 0
+		self.lock = False
+		
+		self.t = 0.0
+		self.t1 = 0.0
 		
 		self.initKalmanFilter()
 
@@ -42,20 +45,25 @@ class StateCoplanarity:
 							[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0],
 							[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0]])
 		self.Q = np.diag([0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.01,0.01,0.01]) # sys noise
-		self.R = np.diag([0.001,0.001,0.001,0.0001,0.0001,0.0001]) # obs noise
+		self.R = np.diag([0.001,0.001,0.001,0.000001,0.000001,0.000001]) # obs noise
 		
 
 
 	"""
-	This method is called from "sensor.py" when new IMU sensor data are arrived.
-	time : time (sec)
+	This method is called from Sensor class when new IMU sensor data are arrived.
+	time_ : time (sec), but never used
 	accel : acceleration in global coordinates
 	ori : orientaion
 	"""
-	def setSensorData(self, time, accel, ori):
+	def setSensorData(self, time_, accel, ori):
+		
+		# if process is locked by Image Particle Filter, do nothing
+		if(self.lock):
+			print("locked")
+			return
 
 		self.t1 = self.t
-		self.t = time
+		self.t = time.time()
 
 		if(self.isFirstTimeIMU):
 			#init mu
@@ -89,6 +97,22 @@ class StateCoplanarity:
 		if(self.isFirstTimeIMU):
 			self.isFirstTimeIMU = False
 
+
+
+	"""
+	This method is called from Image class when new camera image data are arrived.
+	keypoints : list of KeyPointPair class objects
+	"""
+	def setImageData(self, keypoints):
+		
+		# Lock IMU process
+		self.lock = True
+		
+		self.t1 = self.t
+		self.t = time.time()
+		
+		# Unlock IMU process
+		self.lock = False
 		
 	
 	"""
