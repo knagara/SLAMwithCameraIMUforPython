@@ -31,14 +31,18 @@ def main():
 	# - IMUKF (IMU with Kalman Filter)
 	# - IMUPF (IMU with Particle Filter, IMU data is observation)
 	# - IMUPF2 (IMU with Particle Filter, IMU data is control)
+	
 	model = "Coplanarity"
 	
-	state = State().getStateClass("IMUPF2") # Select model
-	#sensor.py
+	state = State().getStateClass(model) # Select model
 	sensor = Sensor(state)
-	#image.py
 	image = Image().getImageClass(model) # Select model
 	image.setState(state)
+	
+	print("=======================================")
+	print("   SLAM with Camera and IMU")
+	print("   "+model+" model is selected.")
+	print("=======================================")
 	
 
 	#This method is called when mqtt is connected.
