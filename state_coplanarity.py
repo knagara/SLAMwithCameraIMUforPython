@@ -17,10 +17,19 @@ import math
 import cv2 as cv
 import numpy as np
 import KF
+from particle_filter import ParticleFilter
+from particle import Particle
 
 class StateCoplanarity:
 
 	def __init__(self):
+		
+		# static parameters
+		self.noise_a_sys = 0.1 # system noise of acceleration　加速度のシステムノイズ
+		self.noise_g_sys = 0.01 # system noise of gyro　ジャイロのシステムノイズ
+		self.noise_a_obs = self.noise_a_sys ** 3 # observation noise of acceleration　加速度の観測ノイズ
+		self.noise_g_obs = self.noise_g_sys ** 3 # observation noise of gyro　ジャイロの観測ノイズ
+		
 		self.init()
 
 
@@ -32,6 +41,7 @@ class StateCoplanarity:
 		self.t1 = 0.0
 		
 		self.initKalmanFilter()
+		self.initParticleFilter()
 
 
 	def initKalmanFilter(self):
@@ -44,10 +54,19 @@ class StateCoplanarity:
 							[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0],
 							[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0],
 							[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0]])
-		self.Q = np.diag([0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.01,0.01,0.01]) # sys noise
-		self.R = np.diag([0.001,0.001,0.001,0.000001,0.000001,0.000001]) # obs noise
+		self.Q = np.diag([self.noise_a_sys,self.noise_a_sys,self.noise_a_sys,self.noise_a_sys,self.noise_a_sys,self.noise_a_sys,self.noise_a_sys,self.noise_a_sys,self.noise_a_sys,self.noise_g_sys,self.noise_g_sys,self.noise_g_sys]) # sys noise
+		self.R = np.diag([self.noise_a_obs,self.noise_a_obs,self.noise_a_obs,self.noise_g_obs,self.noise_g_obs,self.noise_g_obs]) # obs noise
 		
 
+	def initParticleFilter(self):
+		self.pf = ParticleFilter().getParticleFilterClass("Coplanarity")
+		self.pf.setParameter(self.noise_a_sys, self.noise_g_sys, self.noise_a_obs, self.noise_g_obs) #パーティクルフィルタのパラメータ（ノイズ） parameters (noise)
+		self.M = 100 # パーティクルの数 num of particles
+		self.X = [] # パーティクルセット set of particles
+		self.loglikelihood = 0.0
+		self.count = 0
+		
+		
 
 	"""
 	This method is called from Sensor class when new IMU sensor data are arrived.
@@ -57,7 +76,7 @@ class StateCoplanarity:
 	"""
 	def setSensorData(self, time_, accel, ori):
 		
-		# if process is locked by Image Particle Filter, do nothing
+		# If process is locked by Image Particle Filter, do nothing
 		if(self.lock):
 			print("locked")
 			return
@@ -105,14 +124,60 @@ class StateCoplanarity:
 	"""
 	def setImageData(self, keypoints):
 		
+		# If IMU data has not been arrived yet, do nothing
+		if(self.isFirstTimeIMU):
+			return
+		
 		# Lock IMU process
 		self.lock = True
 		
 		self.t1 = self.t
 		self.t = time.time()
 		
+		# crate particle from state vector
+		self.X = self.createParticleFromStateVector(self.mu, self.sigma)
+		
+		# exec particle filter
+		self.X = self.pf.pf_step(self.X, self.t - self.t1, keypoints, self.M)
+		
+		# create state vector from particle set
+		self.mu = self.createStateVectorFromParticle(self.X)
+		
 		# Unlock IMU process
 		self.lock = False
+
+
+	"""
+	create particle set from state vector
+	"""
+	def createParticleFromStateVector(self, mu, sigma):
+		X = []
+		for i in range(self.M):
+			particle = Particle()
+			particle.initWithStateVector(mu, sigma)
+			X.append(particle)
+		return X
+		
+
+	"""
+	create state vector from particle set
+	"""
+	def createStateVectorFromParticle(self, X):
+		x = []
+		v = []
+		a = []
+		o = []
+		for X_ in X:
+			x.append(X_.x)
+			v.append(X_.v)
+			a.append(X_.a)
+			o.append(X_.o)
+		x_mu = np.mean(x, axis=0)
+		v_mu = np.mean(v, axis=0)
+		a_mu = np.mean(a, axis=0)
+		o_mu = np.mean(o, axis=0)
+		mu =  np.array([x_mu[0],x_mu[1],x_mu[2],v_mu[0],v_mu[1],v_mu[2],a_mu[0],a_mu[1],a_mu[2],o_mu[0],o_mu[1],o_mu[2]])
+		return mu
 		
 	
 	"""

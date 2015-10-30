@@ -46,7 +46,8 @@ class StateIMUPF:
 
 	def initParticle(self, accel, ori):
 		X = []
-		particle = Particle(accel, ori)
+		particle = Particle()
+		particle.initWithIMU(accel, ori)
 		for i in range(self.M):
 			X.append(particle)
 		return X
