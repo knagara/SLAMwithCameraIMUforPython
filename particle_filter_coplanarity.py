@@ -7,6 +7,7 @@ Particle Filter
 import numpy
 import copy
 import math
+import Util
 
 class ParticleFilterCoplanarity:
 
@@ -14,11 +15,15 @@ class ParticleFilterCoplanarity:
 		self.var_sys = 1.0
 		self.var_obs = 1.0
 		
-	def setParameter(self, param1, param2, param3, param4):
+	def setFocus(self, f_):
+		self.focus = f_
+		
+	def setParameter(self, param1, param2, param3, param4, param5):
 		self.noise_a_sys = param1 # system noise of acceleration　加速度のシステムノイズ
 		self.noise_g_sys = param2 # system noise of gyro　ジャイロのシステムノイズ
 		self.noise_a_obs = param3 # observation noise of acceleration　加速度の観測ノイズ
 		self.noise_g_obs = param4 # observation noise of gyro　ジャイロの観測ノイズ
+		self.noise_coplanarity_obs = param5 # observation noise of coplanarity 共面条件の観測ノイズ
 	
 
 	def f(self, dt, X):
@@ -46,13 +51,13 @@ class ParticleFilterCoplanarity:
 		return X_new
 					
 
-	def likelihood(self, keypoints, X, X1):
+	def likelihood(self, keypointPairs, X, X1):
 		""" Likelihood function
 		- 尤度関数
 			p(y|x) ~ exp(-|coplanarity|^2 / 2*sigma^2)
 		Parameters
 		----------
-		keypoints : 特徴点ペア pairs of keyponts between t-1 frame and t frame
+		keypointPairs : 特徴点ペア pairs of keyponts between t-1 frame and t frame
 		X : 予測　Predicted particle
 		X1 : t-1の状態　particle at time t-1
 		Returns
@@ -60,14 +65,36 @@ class ParticleFilterCoplanarity:
 		likelihood : 尤度 Likelihood
 		"""
 		
+		# Generate coplanarity matrix and calc determinant.
+		# | x-x1 y-y1 z-z1 | -> xyz
+		# |  u1   v1   w1  | -> uvw1
+		# |  u2   v2   w2  | -> uvw2
+		coplanarity_determinant_total = 0.0
 		xyz = numpy.array([X.x[0] - X1.x[0], X.x[1] - X1.x[1], X.x[2] - X1.x[2]])
-		uvw1 = numpy.array([0.,0.,0.])
-		uvw2 = numpy.array([0.,0.,0.])
-		
-		coplanarity = numpy.array([xyz,uvw1,uvw2])
-		det = numpy.linalg.det(coplanarity)
+		for KP in keypointPairs:
+			# Generate uvw1 (time:t-1)
+			uvf1 = numpy.array([KP.x1, KP.y1, self.focus])
+			rotX = Util.rotationMatrixX(X1.o[0])
+			rotY = Util.rotationMatrixY(X1.o[1])
+			rotZ = Util.rotationMatrixZ(X1.o[2])
+			# uvw1 = R(z)R(y)R(x)uvf1
+			uvw1 = numpy.dot(rotZ,numpy.dot(rotY,numpy.dot(rotX,uvf1)))
+			# Generate uvw2 (time:t)
+			uvf2 = numpy.array([KP.x2, KP.y2, self.focus])
+			rotX = Util.rotationMatrixX(X.o[0])
+			rotY = Util.rotationMatrixY(X.o[1])
+			rotZ = Util.rotationMatrixZ(X.o[2])
+			# uvw2 = R(z)R(y)R(x)uvf2
+			uvw2 = numpy.dot(rotZ,numpy.dot(rotY,numpy.dot(rotX,uvf2)))
+			# Generate coplanarity matrix
+			coplanarity_matrix = numpy.array([xyz,uvw1,uvw2])
+			# Calc determinant
+			determinant = numpy.linalg.det(coplanarity_matrix)
+			# Add
+			coplanarity_determinant_total += determinant
 					
-		return numpy.exp()
+		# return likelihood
+		return numpy.exp(coplanarity_determinant_total / (-2.0 * (self.noise_coplanarity_obs**2)) )
 					
 
 	def resampling(self, X, W, M):
@@ -90,14 +117,14 @@ class ParticleFilterCoplanarity:
 		return X_resampled
 					
 
-	def pf_step(self, X, dt, keypoints, M):
+	def pf_step(self, X, dt, keypointPairs, M):
 		""" One Step of Sampling Importance Resampling for Particle Filter
 			for IMU sensor
 		Parameters
 		----------
 		X : 状態 List of state set
 		dt : 時刻の差分 delta of time
-		keypoints : 特徴点ペア pairs of keyponts between t-1 frame and t frame
+		keypointPairs : 特徴点ペア pairs of keypoints between t-1 frame and t frame
 		M : パーティクルの数 num of particles
 		Returns
 		-------
@@ -112,7 +139,7 @@ class ParticleFilterCoplanarity:
 			# 推定 prediction
 			X_predicted[i] = self.f(dt, X[i])
 			# 更新 update
-			weight[i] = self.likelihood(keypoints, X_predicted[i], X[i])
+			weight[i] = self.likelihood(keypointPairs, X_predicted[i], X[i])
 		# 正規化 normalization
 		weight_sum = sum(weight) # 総和 the sum of weights
 		for i in range(M):

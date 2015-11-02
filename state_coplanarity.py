@@ -25,10 +25,12 @@ class StateCoplanarity:
 	def __init__(self):
 		
 		# static parameters
+		self.f = 1575.54144 # focus length [px] 焦点距離 [px]
 		self.noise_a_sys = 0.1 # system noise of acceleration　加速度のシステムノイズ
 		self.noise_g_sys = 0.01 # system noise of gyro　ジャイロのシステムノイズ
-		self.noise_a_obs = self.noise_a_sys ** 3 # observation noise of acceleration　加速度の観測ノイズ
-		self.noise_g_obs = self.noise_g_sys ** 3 # observation noise of gyro　ジャイロの観測ノイズ
+		self.noise_a_obs = 0.001 # observation noise of acceleration　加速度の観測ノイズ
+		self.noise_g_obs = 0.000001 # observation noise of gyro　ジャイロの観測ノイズ
+		self.noise_coplanarity_obs = 10.0 # observation noise of coplanarity 共面条件の観測ノイズ
 		
 		self.init()
 
@@ -60,7 +62,8 @@ class StateCoplanarity:
 
 	def initParticleFilter(self):
 		self.pf = ParticleFilter().getParticleFilterClass("Coplanarity")
-		self.pf.setParameter(self.noise_a_sys, self.noise_g_sys, self.noise_a_obs, self.noise_g_obs) #パーティクルフィルタのパラメータ（ノイズ） parameters (noise)
+		self.pf.setFocus(self.f)
+		self.pf.setParameter(self.noise_a_sys, self.noise_g_sys, self.noise_a_obs, self.noise_g_obs, self.noise_coplanarity_obs) #パーティクルフィルタのパラメータ（ノイズ） parameters (noise)
 		self.M = 100 # パーティクルの数 num of particles
 		self.X = [] # パーティクルセット set of particles
 		self.loglikelihood = 0.0
@@ -122,7 +125,7 @@ class StateCoplanarity:
 	This method is called from Image class when new camera image data are arrived.
 	keypoints : list of KeyPointPair class objects
 	"""
-	def setImageData(self, keypoints):
+	def setImageData(self, keypointPairs):
 		
 		# If IMU data has not been arrived yet, do nothing
 		if(self.isFirstTimeIMU):
@@ -138,7 +141,7 @@ class StateCoplanarity:
 		self.X = self.createParticleFromStateVector(self.mu, self.sigma)
 		
 		# exec particle filter
-		self.X = self.pf.pf_step(self.X, self.t - self.t1, keypoints, self.M)
+		self.X = self.pf.pf_step(self.X, self.t - self.t1, keypointPairs, self.M)
 		
 		# create state vector from particle set
 		self.mu = self.createStateVectorFromParticle(self.X)

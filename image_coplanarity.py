@@ -43,10 +43,10 @@ class ImageCoplanarity:
 			#print("nomatch"),
 			return
 
-		keypoints = []
+		keypointPairs = []
 		for d in data:
 			if(d != ''):
-				keypoints.append(KeyPointPair(d))
+				keypointPairs.append(KeyPointPair(d))
 
-		self.state.setImageData(keypoints)
+		self.state.setImageData(keypointPairs)
 
