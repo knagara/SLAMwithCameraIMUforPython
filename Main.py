@@ -25,14 +25,16 @@ from image import Image
 def main():
 	global state, sensor, image
 	
-	# Select model (state type & estimation model)
+	# Model options (state vector type & estimation model)
 	# - Coplanarity (IMU with Kalman Filter & Camera with Particle Filter. Observation model is coplanarity. State vector is device state only)
 	# - RBPF (FastSLAM. IMU with Particle Filter & Camera with Extended Kalman Filter. Observation model is inverse depth. State vector are device and landmark state. Estimated by Rao-Blackwellized particle filter)
 	# - IMUKF (IMU with Kalman Filter)
 	# - IMUPF (IMU with Particle Filter, IMU data is observation)
 	# - IMUPF2 (IMU with Particle Filter, IMU data is control)
 	
+	# ----- Select model here! ----- #
 	model = "Coplanarity"
+	# ----- Select model here! ----- #
 	
 	state = State().getStateClass(model) # Select model
 	sensor = Sensor(state)
@@ -43,6 +45,25 @@ def main():
 	print("   SLAM with Camera and IMU")
 	print("   "+model+" model is selected.")
 	print("=======================================")
+	
+	
+	#Get state from state class and publish
+	def publish_state():
+		global state, sensor, image
+		x,v,a,o = state.getState() #Get estimated state vector
+		
+		if(sensor.accel_g.size == 0):
+			return
+		
+		a_temp = sensor.accel_g
+		o_temp = sensor.orientation
+			
+		#Publish estimated state vector to MQTT broker
+		client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(o[0])+"&"+str(o[1])+"&"+str(o[2]))
+		client.publish("SLAM/output/accel",str(a[0])+"&"+str(a[1])+"&"+str(a[2]))
+		client.publish("SLAM/output/velocity",str(v[0])+"&"+str(v[1])+"&"+str(v[2]))
+		client.publish("SLAM/output/temp",str(a[0])+"&"+str(a[1])+"&"+str(a[2])+"&"+str(a_temp[0])+"&"+str(a_temp[1])+"&"+str(a_temp[2]))
+		#client.publish("SLAM/output/temp",str(o[0])+"&"+str(o[1])+"&"+str(o[2])+"&"+str(o_temp[0])+"&"+str(o_temp[1])+"&"+str(o_temp[2]))
 	
 
 	#This method is called when mqtt is connected.
@@ -61,20 +82,14 @@ def main():
 		if(str(msg.topic) == "SLAM/input/camera"): #image.py
 			#print("+"),
 			image.processData(data) #Process data
+			publish_state()
 			#print "|",
+			#pass
 			
 		elif(str(msg.topic) == "SLAM/input/all"): #sensor.py
 			#print "*",
 			sensor.processData(data) #Process data
-			
-			x,v,a,o = state.getState() #Get estimated state vector
-			a_temp = sensor.accel_g
-			
-			#Publish estimated state vector to MQTT broker
-			client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(o[0])+"&"+str(o[1])+"&"+str(o[2]))
-			client.publish("SLAM/output/accel",str(a[0])+"&"+str(a[1])+"&"+str(a[2]))
-			client.publish("SLAM/output/velocity",str(v[0])+"&"+str(v[1])+"&"+str(v[2]))
-			client.publish("SLAM/output/temp",str(a[0])+"&"+str(a[1])+"&"+str(a[2])+"&"+str(a_temp[0])+"&"+str(a_temp[1])+"&"+str(a_temp[2]))
+			publish_state()			
 			#print ",",
 	
 		elif(str(msg.topic) == "SLAM/input/stop"): #Stop

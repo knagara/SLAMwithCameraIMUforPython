@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import copy
 import numpy as np
 
 
@@ -23,8 +24,8 @@ def execKF1Simple(Y, mu0, Sigma0, A, C, Q, R):
     - M : 状態推定値列
     '''
 
-    mu = mu0 # 初期状態推定値
-    Sigma = Sigma0 # 初期誤差共分散行列
+    mu = copy.deepcopy(mu0) # 初期状態推定値
+    Sigma = copy.deepcopy(Sigma0) # 初期誤差共分散行列
 
     # 推定
     mu_ = A.dot(mu)

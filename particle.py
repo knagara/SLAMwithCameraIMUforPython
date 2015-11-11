@@ -22,6 +22,11 @@ class Particle:
 		self.keypoint = []
 		
 		
+	def initWithMu(self,mu):
+		self.x = np.array([mu[0],mu[1],mu[2]])
+		self.o = np.array([mu[9],mu[10],mu[11]])
+		
+		
 	def initWithIMU(self,accel,ori):
 		self.a = accel
 		self.o = ori
