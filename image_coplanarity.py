@@ -36,17 +36,19 @@ class ImageCoplanarity:
 
 
 	#Set new data and Execute all functions
-	def processData(self,data):
+	def processData(self,time_,data):
 
 		#if nomatch then nothing to do
 		if(data[0] == "nomatch"):
 			#print("nomatch"),
 			return
 
+		time = (float(long(time_) / 1000.0))
+
 		keypointPairs = []
 		for d in data:
 			if(d != ''):
 				keypointPairs.append(KeyPointPair(d))
 
-		self.state.setImageData(keypointPairs)
+		self.state.setImageData(time,keypointPairs)
 

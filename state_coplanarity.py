@@ -25,14 +25,15 @@ class StateCoplanarity:
 
 	def __init__(self):
 		
-		# static parameters
-		self.M = 100 # パーティクルの数 num of particles
+		# ----- Set parameters here! ----- #
+		self.M = 100 # total number of particles パーティクルの数
 		self.f = 1575.54144 # focus length [px] 焦点距離 [px]
 		self.noise_a_sys = 0.1 # system noise of acceleration　加速度のシステムノイズ
 		self.noise_g_sys = 0.1 # system noise of gyro　ジャイロのシステムノイズ
 		self.noise_a_obs = 0.000001 # observation noise of acceleration　加速度の観測ノイズ
 		self.noise_g_obs = 0.000001 # observation noise of gyro　ジャイロの観測ノイズ
 		self.noise_coplanarity_obs = 1.0 # observation noise of coplanarity 共面条件の観測ノイズ
+		# ----- Set parameters here! ----- #
 		
 		self.init()
 
@@ -53,7 +54,6 @@ class StateCoplanarity:
 		self.mu = np.array([0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
 		self.mu1 = np.array([0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
 		self.sigma = np.zeros([12,12])
-		self.A = np.identity(12)
 		self.C = np.array([		[0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0],
 							[0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0],
 							[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0],
@@ -76,7 +76,7 @@ class StateCoplanarity:
 
 	"""
 	This method is called from Sensor class when new IMU sensor data are arrived.
-	time_ : time (sec), but never used
+	time_ : time (sec)
 	accel : acceleration in global coordinates
 	ori : orientaion
 	"""
@@ -89,7 +89,8 @@ class StateCoplanarity:
 
 		# Get current time
 		self.t1 = self.t
-		self.t = time.time()
+		self.t = time_
+		dt = self.t - self.t1
 
 		if(self.isFirstTimeIMU):
 			#init mu
@@ -101,35 +102,38 @@ class StateCoplanarity:
 			#observation
 			Y = np.array([accel[0],accel[1],accel[2],
 						ori[0],ori[1],ori[2]])
-			dt = self.t - self.t1
 			dt2 = 0.5 * dt * dt
 			#dt3 = (1.0 / 6.0) * dt2 * dt
-			self.A = np.array([[1.0,0.0,0.0,dt,0.0,0.0,dt2,0.0,0.0,0.0,0.0,0.0],
-							[0.0,1.0,0.0,0.0,dt,0.0,0.0,dt2,0.0,0.0,0.0,0.0],
-							[0.0,0.0,1.0,0.0,0.0,dt,0.0,0.0,dt2,0.0,0.0,0.0],
-							[0.0,0.0,0.0,1.0,0.0,0.0,dt,0.0,0.0,0.0,0.0,0.0],
-							[0.0,0.0,0.0,0.0,1.0,0.0,0.0,dt,0.0,0.0,0.0,0.0],
-							[0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,dt,0.0,0.0,0.0],
-							[0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0],
-							[0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0],
-							[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0],
-							[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0],
-							[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0],
-							[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0]])
+			A = np.array([[1.0,0.0,0.0,dt,0.0,0.0,dt2,0.0,0.0,0.0,0.0,0.0],
+						[0.0,1.0,0.0,0.0,dt,0.0,0.0,dt2,0.0,0.0,0.0,0.0],
+						[0.0,0.0,1.0,0.0,0.0,dt,0.0,0.0,dt2,0.0,0.0,0.0],
+						[0.0,0.0,0.0,1.0,0.0,0.0,dt,0.0,0.0,0.0,0.0,0.0],
+						[0.0,0.0,0.0,0.0,1.0,0.0,0.0,dt,0.0,0.0,0.0,0.0],
+						[0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,dt,0.0,0.0,0.0],
+						[0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0],
+						[0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0],
+						[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0],
+						[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0],
+						[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0],
+						[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0]])
 			Qt = np.diag([dt2,dt2,dt2,dt,dt,dt,1.0,1.0,1.0,dt,dt,dt])
 			Q = Qt.dot(self.Q)
-			self.mu, self.sigma = KF.execKF1Simple(Y,self.mu,self.sigma,self.A,self.C,Q,self.R)
+			self.mu, self.sigma = KF.execKF1Simple(Y,self.mu,self.sigma,A,self.C,Q,self.R)
 			
+			# print sigma
+			print("IMU"),
+			print(dt)
+			#print(self.sigma)
 			# print variance of x
 			#print("IMU"),
 			#print(self.sigma[0][0]),
 			#print(self.sigma[1][1]),
 			#print(self.sigma[2][2])
 			# print variance of a
-			print("IMU"),
-			print(self.sigma[6][6]),
-			print(self.sigma[7][7]),
-			print(self.sigma[8][8])
+			#print("IMU"),
+			#print(self.sigma[6][6]),
+			#print(self.sigma[7][7]),
+			#print(self.sigma[8][8])
 
 		if(self.isFirstTimeIMU):
 			self.isFirstTimeIMU = False
@@ -138,9 +142,10 @@ class StateCoplanarity:
 
 	"""
 	This method is called from Image class when new camera image data are arrived.
+	time_ : time (sec)
 	keypointPairs : list of KeyPointPair class objects
 	"""
-	def setImageData(self, keypointPairs):
+	def setImageData(self, time_, keypointPairs):
 				
 		# If IMU data has not been arrived yet, do nothing
 		if(self.isFirstTimeIMU):
@@ -157,7 +162,8 @@ class StateCoplanarity:
 		
 		# Get current time
 		self.t1 = self.t
-		self.t = time.time()
+		self.t = time_
+		dt = self.t - self.t1
 		
 		# create particle from state vector
 		self.X = self.createParticleFromStateVector(self.mu, self.sigma)
@@ -167,21 +173,25 @@ class StateCoplanarity:
 		X1.initWithMu(self.mu1)
 		
 		# exec particle filter
-		self.X = self.pf.pf_step(self.X, X1, self.t - self.t1, keypointPairs, self.M)
+		self.X = self.pf.pf_step(self.X, X1, dt, keypointPairs, self.M)
 		
 		# create state vector from particle set
 		self.mu, self.sigma = self.createStateVectorFromParticle(self.X)
 		
+		# print sigma
+		print("Camera"),
+		print(dt)
+		#print(self.sigma)
 		# print variance of x
 		#print("Camera"),
 		#print(self.sigma[0][0]),
 		#print(self.sigma[1][1]),
 		#print(self.sigma[2][2])
 		# print variance of a
-		print("Camera"),
-		print(self.sigma[6][6]),
-		print(self.sigma[7][7]),
-		print(self.sigma[8][8])
+		#print("Camera"),
+		#print(self.sigma[6][6]),
+		#print(self.sigma[7][7]),
+		#print(self.sigma[8][8])
 			
 		# save mu[t] as mu[t-1]
 		self.mu1 = copy.deepcopy(self.mu) 

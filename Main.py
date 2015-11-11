@@ -76,18 +76,21 @@ def main():
 	def on_message(client, userdata, msg):
 		global state, sensor, image
 		
-		data = str(msg.payload).split('&') #split message by &
 		
 		#Process data in senser.py or image.py
 		if(str(msg.topic) == "SLAM/input/camera"): #image.py
 			#print("+"),
-			image.processData(data) #Process data
+			data_ = str(msg.payload).split('$') # time$data&data&...
+			time = data_[0]
+			data = data_[1].split('&') # data&data&...
+			image.processData(time,data) #Process data
 			publish_state()
 			#print "|",
 			#pass
 			
 		elif(str(msg.topic) == "SLAM/input/all"): #sensor.py
 			#print "*",
+			data = str(msg.payload).split('&') # data&data&...
 			sensor.processData(data) #Process data
 			publish_state()			
 			#print ",",
