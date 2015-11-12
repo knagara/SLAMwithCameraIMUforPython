@@ -25,20 +25,19 @@ from image import Image
 def main():
 	global state, sensor, image
 	
+	# ----- Select model here! ----- #
+	model = "Coplanarity"
 	# Model options (state vector type & estimation model)
 	# - Coplanarity (IMU with Kalman Filter & Camera with Particle Filter. Observation model is coplanarity. State vector is device state only)
 	# - RBPF (FastSLAM. IMU with Particle Filter & Camera with Extended Kalman Filter. Observation model is inverse depth. State vector are device and landmark state. Estimated by Rao-Blackwellized particle filter)
 	# - IMUKF (IMU with Kalman Filter)
 	# - IMUPF (IMU with Particle Filter, IMU data is observation)
 	# - IMUPF2 (IMU with Particle Filter, IMU data is control)
-	
-	# ----- Select model here! ----- #
-	model = "Coplanarity"
 	# ----- Select model here! ----- #
 	
-	state = State().getStateClass(model) # Select model
+	state = State().getStateClass(model)
 	sensor = Sensor(state)
-	image = Image().getImageClass(model) # Select model
+	image = Image().getImageClass(model)
 	image.setState(state)
 	
 	print("=======================================")
@@ -86,7 +85,6 @@ def main():
 			image.processData(time,data) #Process data
 			publish_state()
 			#print "|",
-			#pass
 			
 		elif(str(msg.topic) == "SLAM/input/all"): #sensor.py
 			#print "*",

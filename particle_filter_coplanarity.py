@@ -37,9 +37,20 @@ class ParticleFilterCoplanarity:
 		
 		dt2 = 0.5 * dt * dt
 		
-		# Simple transition
+		""" # Simple transition
 		X_new.x = X.x + dt*X.v + dt2*X.a
 		X_new.v = X.v + dt*X.a
+		X_new.a = X.a
+		X_new.o = X.o
+		"""
+		
+		# Transition with noise (only x,v)
+		w_mean = numpy.zeros(3) # mean of noise
+		w_cov_a = numpy.eye(3) * self.noise_a_sys # covariance matrix of noise (accel)
+		w_a = numpy.random.multivariate_normal(w_mean, w_cov_a) # generate random
+		
+		X_new.x = X.x + dt*X.v + dt2*X.a + dt2*w_a
+		X_new.v = X.v + dt*X.a + dt*w_a
 		X_new.a = X.a
 		X_new.o = X.o
 		
@@ -87,6 +98,7 @@ class ParticleFilterCoplanarity:
 			rotZ = Util.rotationMatrixZ(X1.o[2])
 			# uvw1 = R(z)R(y)R(x)uvf1
 			uvw1 = numpy.dot(rotZ,numpy.dot(rotY,numpy.dot(rotX,uvf1)))
+			uvw1 /= 100.0 # Adjust scale to decrease calculation error. This doesn't have an influence to likelihood.
 			# Generate uvw2 (time:t)
 			uvf2 = numpy.array([KP.x2, KP.y2, self.focus])
 			rotX = Util.rotationMatrixX(X.o[0])
@@ -94,6 +106,7 @@ class ParticleFilterCoplanarity:
 			rotZ = Util.rotationMatrixZ(X.o[2])
 			# uvw2 = R(z)R(y)R(x)uvf2
 			uvw2 = numpy.dot(rotZ,numpy.dot(rotY,numpy.dot(rotX,uvf2)))
+			uvw2 /= 100.0 # Adjust scale to decrease calculation error. This doesn't have an influence to likelihood.
 			# Generate coplanarity matrix
 			coplanarity_matrix = numpy.array([xyz,uvw1,uvw2])
 			# Calc determinant
@@ -102,6 +115,7 @@ class ParticleFilterCoplanarity:
 			coplanarity_determinant_square_total += (determinant**2)
 					
 		#print(coplanarity_determinant_square_total)
+					
 		# return likelihood
 		return numpy.exp(coplanarity_determinant_square_total / (-2.0 * (self.noise_coplanarity_obs**2)) )
 					

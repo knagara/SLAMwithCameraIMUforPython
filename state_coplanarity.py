@@ -17,6 +17,8 @@ import copy
 import math
 import cv2 as cv
 import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d.axes3d import Axes3D
 import KF
 from particle_filter import ParticleFilter
 from particle import Particle
@@ -27,12 +29,18 @@ class StateCoplanarity:
 		
 		# ----- Set parameters here! ----- #
 		self.M = 100 # total number of particles パーティクルの数
-		self.f = 1575.54144 # focus length [px] 焦点距離 [px]
-		self.noise_a_sys = 0.1 # system noise of acceleration　加速度のシステムノイズ
-		self.noise_g_sys = 0.1 # system noise of gyro　ジャイロのシステムノイズ
-		self.noise_a_obs = 0.000001 # observation noise of acceleration　加速度の観測ノイズ
-		self.noise_g_obs = 0.000001 # observation noise of gyro　ジャイロの観測ノイズ
-		self.noise_coplanarity_obs = 1.0 # observation noise of coplanarity 共面条件の観測ノイズ
+		self.f = 1575.54144 # focus length of camera [px] カメラの焦点距離 [px]
+		# Kalman Filter
+		self.noise_a_sys = 0.01 # system noise of acceleration　加速度のシステムノイズ
+		self.noise_g_sys = 0.01 # system noise of gyro　ジャイロのシステムノイズ
+		self.noise_a_obs = 0.00000001 # observation noise of acceleration　加速度の観測ノイズ
+		self.noise_g_obs = 0.00000001 # observation noise of gyro　ジャイロの観測ノイズ
+		# Particle Filter
+		self.PFnoise_a_sys = 10.0 # system noise of acceleration　加速度のシステムノイズ
+		self.PFnoise_g_sys = 10.0 # system noise of gyro　ジャイロのシステムノイズ
+		self.PFnoise_a_obs = 0.00000001 # observation noise of acceleration　加速度の観測ノイズ
+		self.PFnoise_g_obs = 0.00000001 # observation noise of gyro　ジャイロの観測ノイズ
+		self.PFnoise_coplanarity_obs = 1.0 # observation noise of coplanarity 共面条件の観測ノイズ
 		# ----- Set parameters here! ----- #
 		
 		self.init()
@@ -67,7 +75,7 @@ class StateCoplanarity:
 	def initParticleFilter(self):
 		self.pf = ParticleFilter().getParticleFilterClass("Coplanarity")
 		self.pf.setFocus(self.f)
-		self.pf.setParameter(self.noise_a_sys, self.noise_g_sys, self.noise_a_obs, self.noise_g_obs, self.noise_coplanarity_obs) #パーティクルフィルタのパラメータ（ノイズ） parameters (noise)
+		self.pf.setParameter(self.PFnoise_a_sys, self.PFnoise_g_sys, self.PFnoise_a_obs, self.PFnoise_g_obs, self.PFnoise_coplanarity_obs) #パーティクルフィルタのパラメータ（ノイズ） parameters (noise)
 		self.X = [] # パーティクルセット set of particles
 		self.loglikelihood = 0.0
 		self.count = 0
@@ -120,10 +128,7 @@ class StateCoplanarity:
 			Q = Qt.dot(self.Q)
 			self.mu, self.sigma = KF.execKF1Simple(Y,self.mu,self.sigma,A,self.C,Q,self.R)
 			
-			# print sigma
-			print("IMU"),
-			print(dt)
-			#print(self.sigma)
+			##################################
 			# print variance of x
 			#print("IMU"),
 			#print(self.sigma[0][0]),
@@ -134,6 +139,7 @@ class StateCoplanarity:
 			#print(self.sigma[6][6]),
 			#print(self.sigma[7][7]),
 			#print(self.sigma[8][8])
+			##################################
 
 		if(self.isFirstTimeIMU):
 			self.isFirstTimeIMU = False
@@ -172,16 +178,29 @@ class StateCoplanarity:
 		X1 = Particle()
 		X1.initWithMu(self.mu1)
 		
+		###################
+		fig=plt.figure()
+		ax=Axes3D(fig)
+		for X_ in self.X:
+			ax.scatter3D(X_.x[0],X_.x[1],X_.x[2])
+		plt.show()
+		###################
+		
 		# exec particle filter
 		self.X = self.pf.pf_step(self.X, X1, dt, keypointPairs, self.M)
+		
+		###################
+		fig=plt.figure()
+		ax=Axes3D(fig)
+		for X_ in self.X:
+			ax.scatter3D(X_.x[0],X_.x[1],X_.x[2])
+		plt.show()
+		###################
 		
 		# create state vector from particle set
 		self.mu, self.sigma = self.createStateVectorFromParticle(self.X)
 		
-		# print sigma
-		print("Camera"),
-		print(dt)
-		#print(self.sigma)
+		##################################
 		# print variance of x
 		#print("Camera"),
 		#print(self.sigma[0][0]),
@@ -192,6 +211,7 @@ class StateCoplanarity:
 		#print(self.sigma[6][6]),
 		#print(self.sigma[7][7]),
 		#print(self.sigma[8][8])
+		##################################
 			
 		# save mu[t] as mu[t-1]
 		self.mu1 = copy.deepcopy(self.mu) 
