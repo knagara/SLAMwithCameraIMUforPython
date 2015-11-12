@@ -40,7 +40,7 @@ class StateCoplanarity:
 		self.PFnoise_g_sys = 10.0 # system noise of gyro　ジャイロのシステムノイズ
 		self.PFnoise_a_obs = 0.00000001 # observation noise of acceleration　加速度の観測ノイズ
 		self.PFnoise_g_obs = 0.00000001 # observation noise of gyro　ジャイロの観測ノイズ
-		self.PFnoise_coplanarity_obs = 1.0 # observation noise of coplanarity 共面条件の観測ノイズ
+		self.PFnoise_coplanarity_obs = 0.1 # observation noise of coplanarity 共面条件の観測ノイズ
 		# ----- Set parameters here! ----- #
 		
 		self.init()
@@ -179,22 +179,24 @@ class StateCoplanarity:
 		X1.initWithMu(self.mu1)
 		
 		###################
-		fig=plt.figure()
-		ax=Axes3D(fig)
+		print("====================")
 		for X_ in self.X:
-			ax.scatter3D(X_.x[0],X_.x[1],X_.x[2])
-		plt.show()
+			print(X_.x[0]),
+			print(X_.x[1]),
+			print(X_.x[2])
+		print("====================")
 		###################
 		
 		# exec particle filter
 		self.X = self.pf.pf_step(self.X, X1, dt, keypointPairs, self.M)
 		
 		###################
-		fig=plt.figure()
-		ax=Axes3D(fig)
+		print("------------------------")
 		for X_ in self.X:
-			ax.scatter3D(X_.x[0],X_.x[1],X_.x[2])
-		plt.show()
+			print(X_.x[0]),
+			print(X_.x[1]),
+			print(X_.x[2])
+		print("------------------------")
 		###################
 		
 		# create state vector from particle set
