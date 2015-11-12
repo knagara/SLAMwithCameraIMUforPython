@@ -3,16 +3,23 @@
 """
 Main.py
 
-author: Keita Nagara (University of Tokyo)
+author: Keita Nagara　永良慶太 (University of Tokyo)
 
-All process start from this program.
-This program receives sensor data from Android application via MQTT message,
-and then it calls methods of "sensor.py".
-"sensor.py" processes sensor data, and results are stored in "state.py".
+The process starts from this program.
+This program receives data from Android application via MQTT, and then send the data to Sensor class or Image class.
+Data are:
+  IMU sensor data     MQTT topic = SLAM/input/all    -> Sensor class
+  Camera image data   MQTT topic = SLAM/input/camera -> Image class
+		
+Sensor class processes IMU sensor data, and send results to State class.
+Image class processes Camera image data, and send results to State class.
+
+State class estimates state (location of the device, etc.) in according to the model you selected below.
 
 FYI:
 MQTT is one of the lightweight messaging protocols.
-If you want to run this program, you must prepare your own server and install MQTT broker, and make "server.conf" on the parent directory of this file. "server.conf" is the file like "hostIPaddress&portNumber&username&password".
+If you want to run this program, you must prepare your own server and install MQTT broker, and create "server.conf" on the parent directory of this file. "server.conf" is the file like "ipaddress&port&username&password".
+
 """
 
 import paho.mqtt.client as mqtt
@@ -25,15 +32,19 @@ from image import Image
 def main():
 	global state, sensor, image
 	
-	# ----- Select model here! ----- #
+	# ============================== #
+	#       Select model here!       #
+	# ============================== #
 	model = "Coplanarity"
-	# Model options (state vector type & estimation model)
+	# ===== Model options (state vector type & estimation model) ===== #
 	# - Coplanarity (IMU with Kalman Filter & Camera with Particle Filter. Observation model is coplanarity. State vector is device state only)
 	# - RBPF (FastSLAM. IMU with Particle Filter & Camera with Extended Kalman Filter. Observation model is inverse depth. State vector are device and landmark state. Estimated by Rao-Blackwellized particle filter)
 	# - IMUKF (IMU with Kalman Filter)
 	# - IMUPF (IMU with Particle Filter, IMU data is observation)
 	# - IMUPF2 (IMU with Particle Filter, IMU data is control)
-	# ----- Select model here! ----- #
+	# ============================== #
+	#       Select model here!       #
+	# ============================== #
 	
 	state = State().getStateClass(model)
 	sensor = Sensor(state)
@@ -46,10 +57,10 @@ def main():
 	print("=======================================")
 	
 	
-	#Get state from state class and publish
+	#Get estimated state vector from state class and publish to the server (MQTT broker).
 	def publish_state():
 		global state, sensor, image
-		x,v,a,o = state.getState() #Get estimated state vector
+		x,v,a,o = state.getState() # Get estimated state vector
 		
 		if(sensor.accel_g.size == 0):
 			return
@@ -57,7 +68,7 @@ def main():
 		a_temp = sensor.accel_g
 		o_temp = sensor.orientation
 			
-		#Publish estimated state vector to MQTT broker
+		# Publish to the server (MQTT broker)
 		client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(o[0])+"&"+str(o[1])+"&"+str(o[2]))
 		client.publish("SLAM/output/accel",str(a[0])+"&"+str(a[1])+"&"+str(a[2]))
 		client.publish("SLAM/output/velocity",str(v[0])+"&"+str(v[1])+"&"+str(v[2]))

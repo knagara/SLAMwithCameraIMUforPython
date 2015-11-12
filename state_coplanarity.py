@@ -127,19 +127,6 @@ class StateCoplanarity:
 			Qt = np.diag([dt2,dt2,dt2,dt,dt,dt,1.0,1.0,1.0,dt,dt,dt])
 			Q = Qt.dot(self.Q)
 			self.mu, self.sigma = KF.execKF1Simple(Y,self.mu,self.sigma,A,self.C,Q,self.R)
-			
-			##################################
-			# print variance of x
-			#print("IMU"),
-			#print(self.sigma[0][0]),
-			#print(self.sigma[1][1]),
-			#print(self.sigma[2][2])
-			# print variance of a
-			#print("IMU"),
-			#print(self.sigma[6][6]),
-			#print(self.sigma[7][7]),
-			#print(self.sigma[8][8])
-			##################################
 
 		if(self.isFirstTimeIMU):
 			self.isFirstTimeIMU = False
@@ -178,42 +165,11 @@ class StateCoplanarity:
 		X1 = Particle()
 		X1.initWithMu(self.mu1)
 		
-		###################
-		print("====================")
-		for X_ in self.X:
-			print(X_.x[0]),
-			print(X_.x[1]),
-			print(X_.x[2])
-		print("====================")
-		###################
-		
 		# exec particle filter
 		self.X = self.pf.pf_step(self.X, X1, dt, keypointPairs, self.M)
 		
-		###################
-		print("------------------------")
-		for X_ in self.X:
-			print(X_.x[0]),
-			print(X_.x[1]),
-			print(X_.x[2])
-		print("------------------------")
-		###################
-		
 		# create state vector from particle set
 		self.mu, self.sigma = self.createStateVectorFromParticle(self.X)
-		
-		##################################
-		# print variance of x
-		#print("Camera"),
-		#print(self.sigma[0][0]),
-		#print(self.sigma[1][1]),
-		#print(self.sigma[2][2])
-		# print variance of a
-		#print("Camera"),
-		#print(self.sigma[6][6]),
-		#print(self.sigma[7][7]),
-		#print(self.sigma[8][8])
-		##################################
 			
 		# save mu[t] as mu[t-1]
 		self.mu1 = copy.deepcopy(self.mu) 

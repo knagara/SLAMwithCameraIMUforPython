@@ -1,0 +1,48 @@
+
+			
+			##################################
+			# print variance of x
+			print("IMU"),
+			print(self.sigma[0][0]),
+			print(self.sigma[1][1]),
+			print(self.sigma[2][2])
+			# print variance of a
+			#print("IMU"),
+			#print(self.sigma[6][6]),
+			#print(self.sigma[7][7]),
+			#print(self.sigma[8][8])
+			##################################
+		
+		##################################
+		# print variance of x
+		print("Camera"),
+		print(self.sigma[0][0]),
+		print(self.sigma[1][1]),
+		print(self.sigma[2][2])
+		# print variance of a
+		#print("Camera"),
+		#print(self.sigma[6][6]),
+		#print(self.sigma[7][7]),
+		#print(self.sigma[8][8])
+		##################################
+
+
+
+		
+		###################
+		print("====================")
+		for X_ in self.X:
+			print(X_.x[0]),
+			print(X_.x[1]),
+			print(X_.x[2])
+		print("====================")
+		###################
+		
+		###################
+		print("------------------------")
+		for X_ in self.X:
+			print(X_.x[0]),
+			print(X_.x[1]),
+			print(X_.x[2])
+		print("------------------------")
+		###################
