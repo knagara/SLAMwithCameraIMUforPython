@@ -36,8 +36,8 @@ class StateCoplanarity:
 		self.noise_a_obs = 0.00000001 # observation noise of acceleration　加速度の観測ノイズ
 		self.noise_g_obs = 0.00000001 # observation noise of gyro　ジャイロの観測ノイズ
 		# Particle Filter
-		self.PFnoise_a_sys = 10.0 # system noise of acceleration　加速度のシステムノイズ
-		self.PFnoise_g_sys = 10.0 # system noise of gyro　ジャイロのシステムノイズ
+		self.PFnoise_a_sys = 5.0 # system noise of acceleration　加速度のシステムノイズ
+		self.PFnoise_g_sys = 5.0 # system noise of gyro　ジャイロのシステムノイズ
 		self.PFnoise_a_obs = 0.00000001 # observation noise of acceleration　加速度の観測ノイズ
 		self.PFnoise_g_obs = 0.00000001 # observation noise of gyro　ジャイロの観測ノイズ
 		self.PFnoise_coplanarity_obs = 0.1 # observation noise of coplanarity 共面条件の観測ノイズ
@@ -98,7 +98,7 @@ class StateCoplanarity:
 		# Get current time
 		self.t1 = self.t
 		self.t = time_
-		dt = self.t - self.t1
+		self.dt = self.t - self.t1
 
 		if(self.isFirstTimeIMU):
 			#init mu
@@ -110,24 +110,24 @@ class StateCoplanarity:
 			#observation
 			Y = np.array([accel[0],accel[1],accel[2],
 						ori[0],ori[1],ori[2]])
-			dt2 = 0.5 * dt * dt
-			#dt3 = (1.0 / 6.0) * dt2 * dt
-			A = np.array([[1.0,0.0,0.0,dt,0.0,0.0,dt2,0.0,0.0,0.0,0.0,0.0],
-						[0.0,1.0,0.0,0.0,dt,0.0,0.0,dt2,0.0,0.0,0.0,0.0],
-						[0.0,0.0,1.0,0.0,0.0,dt,0.0,0.0,dt2,0.0,0.0,0.0],
-						[0.0,0.0,0.0,1.0,0.0,0.0,dt,0.0,0.0,0.0,0.0,0.0],
-						[0.0,0.0,0.0,0.0,1.0,0.0,0.0,dt,0.0,0.0,0.0,0.0],
-						[0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,dt,0.0,0.0,0.0],
+			dt2 = 0.5 * self.dt * self.dt
+			#dt3 = (1.0 / 6.0) * dt2 * self.dt
+			A = np.array([[1.0,0.0,0.0,self.dt,0.0,0.0,dt2,0.0,0.0,0.0,0.0,0.0],
+						[0.0,1.0,0.0,0.0,self.dt,0.0,0.0,dt2,0.0,0.0,0.0,0.0],
+						[0.0,0.0,1.0,0.0,0.0,self.dt,0.0,0.0,dt2,0.0,0.0,0.0],
+						[0.0,0.0,0.0,1.0,0.0,0.0,self.dt,0.0,0.0,0.0,0.0,0.0],
+						[0.0,0.0,0.0,0.0,1.0,0.0,0.0,self.dt,0.0,0.0,0.0,0.0],
+						[0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,self.dt,0.0,0.0,0.0],
 						[0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0],
 						[0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0],
 						[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0],
 						[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0],
 						[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0],
 						[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0]])
-			Qt = np.diag([dt2,dt2,dt2,dt,dt,dt,1.0,1.0,1.0,dt,dt,dt])
+			Qt = np.diag([dt2,dt2,dt2,self.dt,self.dt,self.dt,1.0,1.0,1.0,self.dt,self.dt,self.dt])
 			Q = Qt.dot(self.Q)
 			self.mu, self.sigma = KF.execKF1Simple(Y,self.mu,self.sigma,A,self.C,Q,self.R)
-
+			
 		if(self.isFirstTimeIMU):
 			self.isFirstTimeIMU = False
 
@@ -154,9 +154,9 @@ class StateCoplanarity:
 		self.lock = True
 		
 		# Get current time
-		self.t1 = self.t
-		self.t = time_
-		dt = self.t - self.t1
+		#self.t1 = self.t
+		#self.t = time_
+		#self.dt = self.t - self.t1
 		
 		# create particle from state vector
 		self.X = self.createParticleFromStateVector(self.mu, self.sigma)
@@ -166,11 +166,11 @@ class StateCoplanarity:
 		X1.initWithMu(self.mu1)
 		
 		# exec particle filter
-		self.X = self.pf.pf_step(self.X, X1, dt, keypointPairs, self.M)
+		self.X = self.pf.pf_step(self.X, X1, 0.02, keypointPairs, self.M)
 		
 		# create state vector from particle set
-		self.mu, self.sigma = self.createStateVectorFromParticle(self.X)
-			
+		self.mu, self.sigma = self.createStateVectorFromParticle(self.X)		
+		
 		# save mu[t] as mu[t-1]
 		self.mu1 = copy.deepcopy(self.mu) 
 		

@@ -37,7 +37,7 @@ class ParticleFilterCoplanarity:
 		
 		dt2 = 0.5 * dt * dt
 		
-		""" # Simple transition
+		"""# Simple transition
 		X_new.x = X.x + dt*X.v + dt2*X.a
 		X_new.v = X.v + dt*X.a
 		X_new.a = X.a
@@ -53,6 +53,7 @@ class ParticleFilterCoplanarity:
 		X_new.v = X.v + dt*X.a + dt*w_a
 		X_new.a = X.a
 		X_new.o = X.o
+		
 		
 		"""  # Transition with noise
 		w_mean = numpy.zeros(3) # mean of noise
@@ -166,8 +167,14 @@ class ParticleFilterCoplanarity:
 			weight[i] = self.likelihood(keypointPairs, X_predicted[i], X1)
 		# 正規化 normalization
 		weight_sum = sum(weight) # 総和 the sum of weights
-		for i in range(M):
-			weight[i] /= weight_sum
+		print(weight_sum)
+		if(weight_sum > 0.000000000000000001):
+			for i in range(M):
+				weight[i] /= weight_sum
+		else:
+			print("weight_sum = 0")
+			for i in range(M):
+				weight[i] = 1/float(M) # 重みの総和がゼロの場合は，すべての重みを同じ大きさにする
 		# リサンプリング re-sampling
 		X_resampled = self.resampling(X_predicted, weight, M)
 

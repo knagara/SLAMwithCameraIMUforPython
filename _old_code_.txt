@@ -1,4 +1,58 @@
 
+		
+		##################################
+		# print variance of x
+		print(self.sigma[0][0]),
+		print(self.sigma[1][1]),
+		print(self.sigma[2][2])
+		dt2 = 0.5 * 0.02 * 0.02
+		w_mean = np.zeros(3) # mean of noise
+		w_cov_a = np.eye(3) * self.PFnoise_a_sys # covariance matrix of noise (accel)
+		w_a = np.random.multivariate_normal(w_mean, w_cov_a) # generate random
+		print(dt2*w_a)
+		##################################
+
+
+
+		# ----- Set parameters here! ----- #
+		self.M = 100 # total number of particles パーティクルの数
+		self.f = 1575.54144 # focus length of camera [px] カメラの焦点距離 [px]
+		# Kalman Filter
+		self.noise_a_sys = 0.01 # system noise of acceleration　加速度のシステムノイズ
+		self.noise_g_sys = 0.01 # system noise of gyro　ジャイロのシステムノイズ
+		self.noise_a_obs = 0.00000001 # observation noise of acceleration　加速度の観測ノイズ
+		self.noise_g_obs = 0.00000001 # observation noise of gyro　ジャイロの観測ノイズ
+		# Particle Filter
+		self.PFnoise_a_sys = 5.0 # system noise of acceleration　加速度のシステムノイズ
+		self.PFnoise_g_sys = 5.0 # system noise of gyro　ジャイロのシステムノイズ
+		self.PFnoise_a_obs = 0.00000001 # observation noise of acceleration　加速度の観測ノイズ
+		self.PFnoise_g_obs = 0.00000001 # observation noise of gyro　ジャイロの観測ノイズ
+		self.PFnoise_coplanarity_obs = 0.1 # observation noise of coplanarity 共面条件の観測ノイズ
+		# ----- Set parameters here! ----- #
+
+
+
+
+		
+		# count
+		self.count += 1
+		print(self.count),
+
+
+
+		coplanarity_matrix = range(M) ########################
+
+		############################
+		print(coplanarity_matrix[0][0]),
+		print(coplanarity_matrix[0][1]),
+		print(coplanarity_matrix[0][2]) 
+		############################
+
+
+
+
+
+
 			
 			##################################
 			# print variance of x
@@ -25,6 +79,7 @@
 		#print(self.sigma[7][7]),
 		#print(self.sigma[8][8])
 		##################################
+
 
 
 

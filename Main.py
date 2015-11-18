@@ -90,6 +90,7 @@ def main():
 		#Process data in senser.py or image.py
 		if(str(msg.topic) == "SLAM/input/camera"): #image.py
 			#print("+"),
+			return 
 			data_ = str(msg.payload).split('$') # time$data&data&...
 			time = data_[0]
 			data = data_[1].split('&') # data&data&...
