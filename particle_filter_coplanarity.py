@@ -165,17 +165,21 @@ class ParticleFilterCoplanarity:
 			X_predicted[i] = self.f(dt, X[i])
 			# 更新 update
 			weight[i] = self.likelihood(keypointPairs, X_predicted[i], X1)
-		# 正規化 normalization
+		# 正規化 normalization of weight
 		weight_sum = sum(weight) # 総和 the sum of weights
-		print(weight_sum)
-		if(weight_sum > 0.000000000000000001):
+		if(weight_sum > 0.5):
+			# 重みの総和が大きい（尤度が高い）場合 likelihood is high enough
+			print(weight_sum)
+			# 正規化 normalization of weight
 			for i in range(M):
 				weight[i] /= weight_sum
+			# リサンプリング re-sampling
+			X_resampled = self.resampling(X_predicted, weight, M)
 		else:
-			print("weight_sum = 0")
-			for i in range(M):
-				weight[i] = 1/float(M) # 重みの総和がゼロの場合は，すべての重みを同じ大きさにする
-		# リサンプリング re-sampling
-		X_resampled = self.resampling(X_predicted, weight, M)
+			# 重みの総和が小さい（尤度が低い）場合 likelihood is low
+			print(weight_sum),
+			print("***")
+			# リサンプリングを行わない No re-sampling
+			X_resampled = copy.deepcopy(X_predicted)
 
 		return X_resampled

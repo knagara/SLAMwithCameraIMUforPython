@@ -89,6 +89,9 @@ class StateCoplanarity:
 	ori : orientaion
 	"""
 	def setSensorData(self, time_, accel, ori):
+
+		# Count 
+		self.count+=1
 		
 		# If process is locked by Image Particle Filter, do nothing
 		if(self.lock):
@@ -99,7 +102,7 @@ class StateCoplanarity:
 		self.t1 = self.t
 		self.t = time_
 		self.dt = self.t - self.t1
-
+		
 		if(self.isFirstTimeIMU):
 			#init mu
 			self.mu = np.array([0.0,0.0,0.0,
@@ -140,6 +143,9 @@ class StateCoplanarity:
 	"""
 	def setImageData(self, time_, keypointPairs):
 				
+		# Count 
+		self.count+=1
+		
 		# If IMU data has not been arrived yet, do nothing
 		if(self.isFirstTimeIMU):
 			return
@@ -166,6 +172,7 @@ class StateCoplanarity:
 		X1.initWithMu(self.mu1)
 		
 		# exec particle filter
+		print(self.count),
 		self.X = self.pf.pf_step(self.X, X1, 0.02, keypointPairs, self.M)
 		
 		# create state vector from particle set
