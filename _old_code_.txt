@@ -1,5 +1,19 @@
 
 		
+
+		##############################
+		print("----------------")
+		for k in keypointPairs:
+			print(k.x1),
+			print(k.y1),
+			print(" -> "),
+			print(k.x2),
+			print(k.y2)
+		##############################
+
+
+
+
 		##################################
 		# print variance of x
 		print(self.sigma[0][0]),

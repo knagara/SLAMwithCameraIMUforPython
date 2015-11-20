@@ -72,7 +72,7 @@ def main():
 		client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(o[0])+"&"+str(o[1])+"&"+str(o[2]))
 		client.publish("SLAM/output/accel",str(a[0])+"&"+str(a[1])+"&"+str(a[2]))
 		client.publish("SLAM/output/velocity",str(v[0])+"&"+str(v[1])+"&"+str(v[2]))
-		client.publish("SLAM/output/temp",str(a[0])+"&"+str(a[1])+"&"+str(a[2])+"&"+str(a_temp[0])+"&"+str(a_temp[1])+"&"+str(a_temp[2]))
+		#client.publish("SLAM/output/temp",str(a[0])+"&"+str(a[1])+"&"+str(a[2])+"&"+str(a_temp[0])+"&"+str(a_temp[1])+"&"+str(a_temp[2]))
 		#client.publish("SLAM/output/temp",str(o[0])+"&"+str(o[1])+"&"+str(o[2])+"&"+str(o_temp[0])+"&"+str(o_temp[1])+"&"+str(o_temp[2]))
 	
 

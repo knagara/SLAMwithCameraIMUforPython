@@ -67,6 +67,19 @@ class ParticleFilterCoplanarity:
 		X_new.a = X.a + w_a
 		X_new.o = X.o + dt*w_g
 		"""
+		
+		"""# Transition with noise (only x Random walk) used for camera only estimation
+		w_mean = numpy.zeros(3) # mean of noise
+		w_cov_a = numpy.eye(3) * self.noise_a_sys # covariance matrix of noise (accel)
+		w_a = numpy.random.multivariate_normal(w_mean, w_cov_a) # generate random
+		w_cov_g = numpy.eye(3) * self.noise_g_sys # covariance matrix of noise (gyro)
+		w_g = numpy.random.multivariate_normal(w_mean, w_cov_g) # generate random
+		
+		X_new.x = X.x + dt*w_a
+		X_new.v = X.v
+		X_new.a = X.a
+		X_new.o = X.o
+		"""
 
 		return X_new
 					
@@ -93,21 +106,21 @@ class ParticleFilterCoplanarity:
 		xyz = numpy.array([X.x[0] - X1.x[0], X.x[1] - X1.x[1], X.x[2] - X1.x[2]])
 		for KP in keypointPairs:
 			# Generate uvw1 (time:t-1)
-			uvf1 = numpy.array([KP.x1, KP.y1, self.focus])
+			uvf1 = numpy.array([KP.x1, -KP.y1, -self.focus]) # Camera coordinates -> Device coordinates
 			rotX = Util.rotationMatrixX(X1.o[0])
 			rotY = Util.rotationMatrixY(X1.o[1])
 			rotZ = Util.rotationMatrixZ(X1.o[2])
 			# uvw1 = R(z)R(y)R(x)uvf1
 			uvw1 = numpy.dot(rotZ,numpy.dot(rotY,numpy.dot(rotX,uvf1)))
-			uvw1 /= 100.0 # Adjust scale to decrease calculation error. This doesn't have an influence to likelihood.
+			uvw1 /= 100.0 # Adjust scale to decrease calculation error. This doesn't have an influence to estimation.
 			# Generate uvw2 (time:t)
-			uvf2 = numpy.array([KP.x2, KP.y2, self.focus])
+			uvf2 = numpy.array([KP.x2, -KP.y2, -self.focus]) # Camera coordinates -> Device coordinates
 			rotX = Util.rotationMatrixX(X.o[0])
 			rotY = Util.rotationMatrixY(X.o[1])
 			rotZ = Util.rotationMatrixZ(X.o[2])
 			# uvw2 = R(z)R(y)R(x)uvf2
 			uvw2 = numpy.dot(rotZ,numpy.dot(rotY,numpy.dot(rotX,uvf2)))
-			uvw2 /= 100.0 # Adjust scale to decrease calculation error. This doesn't have an influence to likelihood.
+			uvw2 /= 100.0 # Adjust scale to decrease calculation error. This doesn't have an influence to estimation.
 			# Generate coplanarity matrix
 			coplanarity_matrix = numpy.array([xyz,uvw1,uvw2])
 			# Calc determinant

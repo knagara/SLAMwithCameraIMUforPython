@@ -48,7 +48,7 @@ class ImageCoplanarity:
 		keypointPairs = []
 		for d in data:
 			if(d != ''):
-				keypointPairs.append(KeyPointPair(d))
-
+				keypointPairs.append(KeyPointPair(d))	
+	
 		self.state.setImageData(time,keypointPairs)
 
