@@ -11,6 +11,7 @@ This class is factory class. Model (state type & estimation model) is selected b
 """
 
 from state_coplanarity import StateCoplanarity
+from state_RBPF import StateRBPF
 from state_IMU_KF import StateIMUKF
 from state_IMU_PF import StateIMUPF
 
@@ -18,10 +19,12 @@ class State:
 
 	def __init__(self):
 		pass
-	
+
 	def getStateClass(self,stateType):
 		if(stateType=="Coplanarity"):
 			return StateCoplanarity()
+		elif(stateType=="RBPF"):
+			return StateRBPF()
 		elif(stateType=="IMUKF"):
 			return StateIMUKF()
 		elif(stateType=="IMUPF"):

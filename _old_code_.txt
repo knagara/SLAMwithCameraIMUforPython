@@ -1,5 +1,23 @@
 
-		
+
+
+
+
+	#Set new data and Execute all functions
+	def processData(self,data):
+
+		#if nomatch then nothing to do
+		if(data[0] == "nomatch"):
+			#print("nomatch"),
+			return
+
+		keypoints = []
+		for d in data:
+			if(d != ''):
+				keypoints.append(KeyPoint(d))
+
+
+
 
 		##############################
 		print("----------------")
@@ -47,7 +65,7 @@
 
 
 
-		
+
 		# count
 		self.count += 1
 		print(self.count),
@@ -59,7 +77,7 @@
 		############################
 		print(coplanarity_matrix[0][0]),
 		print(coplanarity_matrix[0][1]),
-		print(coplanarity_matrix[0][2]) 
+		print(coplanarity_matrix[0][2])
 		############################
 
 
@@ -67,7 +85,7 @@
 
 
 
-			
+
 			##################################
 			# print variance of x
 			print("IMU"),
@@ -80,7 +98,7 @@
 			#print(self.sigma[7][7]),
 			#print(self.sigma[8][8])
 			##################################
-		
+
 		##################################
 		# print variance of x
 		print("Camera"),
@@ -97,7 +115,7 @@
 
 
 
-		
+
 		###################
 		print("====================")
 		for X_ in self.X:
@@ -106,7 +124,7 @@
 			print(X_.x[2])
 		print("====================")
 		###################
-		
+
 		###################
 		print("------------------------")
 		for X_ in self.X:

@@ -7,16 +7,6 @@ author: Keita Nagara (University of Tokyo)
 
 This class is called from "Main.py", and process sensor data.
 
-methods:
-	processData(data) <- called from "Main.py"
-
-	calcOrientation()
-	calcRotationMatrix()
-	#removeCentrifugalAndTangentialAccel()
-	calcGlobalAcceleration()
-	pushDataToState()
-
-	init()
 """
 
 from math import *
@@ -77,9 +67,9 @@ class Sensor:
 		self.gyro = np.array([float(data[10]),float(data[11]),float(data[12])])
 		#self.gyro_diff = np.array([float(data[13]),float(data[14]),float(data[15])])
 
-		self.calcOrientation()
-		self.calcRotationMatrix()
-		self.calcGlobalAcceleration()
+		#self.calcOrientation()
+		#self.calcRotationMatrix()
+		#self.calcGlobalAcceleration()
 		self.pushDataToState()
 
 		if(self.isFirstTime):
@@ -88,7 +78,6 @@ class Sensor:
 
 	#Calc orientation
 	def calcOrientation(self):
-		"""
 		self.calcOrientationByGravity()
 		if(self.isFirstTime):
 			self.orientation = self.orientation_g
@@ -114,9 +103,6 @@ class Sensor:
 			if(self.orientation[2]<-pi):
 				self.orientation[2] += pi*2.0
 
-		self.calcOrientationByGyro()
-		"""
-		self.orientation = self.orientation_g
 
 
 	#Calc orientation by using gyro
@@ -215,5 +201,5 @@ class Sensor:
 
 	#Push all data to State class
 	def pushDataToState(self):
-		self.state.setSensorData(self.time, self.accel_g, self.orientation)
+		self.state.setSensorData(self.time, self.accel, self.orientation_g)
 

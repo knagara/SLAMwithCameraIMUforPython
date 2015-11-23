@@ -16,11 +16,11 @@ from math import *
 import cv2 as cv
 import numpy as np
 import Util
-from keypoint import KeyPoint
+from keypoint_pair import KeyPointPair
 
 class ImageRBPF:
 
-	def __init__(self,_state):
+	def __init__(self):
 		pass
 
 	def init(self):
@@ -28,7 +28,7 @@ class ImageRBPF:
 		#self.state.init() #this is also called in sensor.py
 		#variables
 		pass
-	
+
 	def setState(self,_state):
 		#state.py
 		self.state = _state
@@ -36,16 +36,19 @@ class ImageRBPF:
 
 
 	#Set new data and Execute all functions
-	def processData(self,data):
+	def processData(self,time_,data):
 
 		#if nomatch then nothing to do
 		if(data[0] == "nomatch"):
 			#print("nomatch"),
 			return
 
-		keypoints = []
+		time = (float(long(time_) / 1000.0))
+
+		keypointPairs = []
 		for d in data:
 			if(d != ''):
-				keypoints.append(KeyPoint(d))
+				keypointPairs.append(KeyPointPair(d))
 
+		self.state.setImageData(time,keypointPairs)
 
