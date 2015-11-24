@@ -17,8 +17,8 @@ class KeyPointPair:
 		
 		data = data_.split(':')
 		
-		self.prevId = int(data[0])
-		self.id = int(data[1])
+		self.prevIndex = int(data[0])
+		self.index = int(data[1])
 		self.x1 = float(data[2]) - cx
 		self.y1 = float(data[3]) - cy
 		self.x2 = float(data[4]) - cx

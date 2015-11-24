@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-GetSonsorData.py
+GetSensorData.py
 Subscribe sensor data and save them as CSV file.
 """
 

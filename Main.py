@@ -35,7 +35,7 @@ def main():
 	# ============================== #
 	#       Select model here!       #
 	# ============================== #
-	model = "Coplanarity"
+	model = "RBPF"
 	# ===== Model options (state vector type & estimation model) ===== #
 	# - Coplanarity (IMU with Kalman Filter & Camera with Particle Filter. Observation model is coplanarity. State vector is device state only)
 	# - RBPF (FastSLAM. IMU with Particle Filter & Camera with Extended Kalman Filter. Observation model is inverse depth. State vector are device and landmark state. Estimated by Rao-Blackwellized particle filter)

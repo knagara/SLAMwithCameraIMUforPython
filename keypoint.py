@@ -19,8 +19,8 @@ class KeyPoint:
 		
 		data = data_.split(':')
 		
-		self.prevId = int(data[0])
-		self.id = int(data[1])
+		self.prevIndex = int(data[0])
+		self.index = int(data[1])
 		self.x = float(data[2]) - cx
 		self.y = float(data[3]) - cy
 		self.descriptor = Descriptor(data[4])

@@ -22,7 +22,38 @@ class ParticleFilterRBPF:
 		self.noise_g_sys = param2 # system noise of gyro　ジャイロのシステムノイズ
 
 
-	def f(self, dt, X, accel, ori):
+	def f_IMU(self, dt, X, accel, ori):
+		""" Transition model
+		- 状態方程式
+			x_t = f(x_t-1, u) + w
+			w ~ N(0, sigma)
+		"""
+
+		X_new = copy.deepcopy(X)
+
+		dt2 = 0.5 * dt * dt
+
+		"""# Simple transition
+		X_new.x = X.x + dt*X.v + dt2*X.a
+		X_new.v = X.v + dt*X.a
+		X_new.a = X.a
+		X_new.o = X.o
+		"""
+
+		# Transition with noise (only x,v)
+		w_mean = numpy.zeros(3) # mean of noise
+		w_cov_a = numpy.eye(3) * self.noise_a_sys # covariance matrix of noise (accel)
+		w_a = numpy.random.multivariate_normal(w_mean, w_cov_a) # generate random
+
+		X_new.x = X.x + dt*X.v + dt2*X.a + dt2*w_a
+		X_new.v = X.v + dt*X.a + dt*w_a
+		X_new.a = accel
+		X_new.o = ori
+
+		return X_new
+
+
+	def f_camera(self, dt, X):
 		""" Transition model
 		- 状態方程式
 			x_t = f(x_t-1, u) + w
@@ -91,14 +122,14 @@ class ParticleFilterRBPF:
 		return X_resampled
 
 
-	def pf_step_camera(self, X, dt, keypointPairs, M):
+	def pf_step_camera(self, X, dt, keypoints, M):
 		""" One Step of Sampling Importance Resampling for Particle Filter
 			for IMU sensor
 		Parameters
 		----------
 		X : 状態 List of state set
 		dt : 時刻の差分 delta of time
-		keypointPairs : 特徴点ペア pairs of keypoints between t-1 frame and t frame
+		keypoints : 特徴点 keypoints
 		M : パーティクルの数 num of particles
 		Returns
 		-------
@@ -111,9 +142,9 @@ class ParticleFilterRBPF:
 
 		for i in range(M):
 			# 推定 prediction
-			X_predicted[i] = self.f(dt, X[i])
+			X_predicted[i] = self.f_camera(dt, X[i])
 			# 更新 update
-			weight[i] = self.likelihood(keypointPairs, X_predicted[i])
+			weight[i] = self.likelihood(keypoints, X_predicted[i])
 		# 正規化 normalization of weight
 		weight_sum = sum(weight) # 総和 the sum of weights
 		if(weight_sum > 0.5):
@@ -155,7 +186,7 @@ class ParticleFilterRBPF:
 
 		for i in range(M):
 			# 推定 prediction
-			X_predicted[i] = self.f(dt, X[i], accel, ori)
+			X_predicted[i] = self.f_IMU(dt, X[i], accel, ori)
 			# 更新 update
 			#weight[i] = self.likelihood(y, X_predicted[i])
 		# 正規化 normalization
