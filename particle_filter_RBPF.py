@@ -122,7 +122,7 @@ class ParticleFilterRBPF:
 		return X_resampled
 
 
-	def pf_step_camera(self, X, dt, keypoints, M):
+	def pf_step_camera(self, X, dt, keypoints, step, M):
 		""" One Step of Sampling Importance Resampling for Particle Filter
 			for IMU sensor
 		Parameters
@@ -130,6 +130,7 @@ class ParticleFilterRBPF:
 		X : 状態 List of state set
 		dt : 時刻の差分 delta of time
 		keypoints : 特徴点 keypoints
+		step : 現在のステップ数 current step
 		M : パーティクルの数 num of particles
 		Returns
 		-------

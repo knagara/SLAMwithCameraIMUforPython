@@ -49,6 +49,7 @@ class StateRBPF:
 		self.X = [] # パーティクルセット set of particles
 		self.loglikelihood = 0.0
 		self.count = 0
+		self.step = 0
 
 
 	def initParticle(self, accel, ori):
@@ -127,7 +128,10 @@ class StateRBPF:
 		self.dt = self.t - self.t1
 
 		# exec particle filter
-		self.X = self.pf.pf_step_camera(self.X, self.dt, keypointPairs, self.M)
+		self.X = self.pf.pf_step_camera(self.X, self.dt, keypointPairs, self.step, self.M)
+
+		# Step
+		self.step += 1
 
 		# Unlock IMU process
 		self.lock = False
