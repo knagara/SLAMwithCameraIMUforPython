@@ -22,6 +22,7 @@ If you want to run this program, you must prepare your own server and install MQ
 
 """
 
+import time
 import paho.mqtt.client as mqtt
 from sensor import Sensor
 from state import State
@@ -60,6 +61,7 @@ def main():
 	#Get estimated state vector from state class and publish to the server (MQTT broker).
 	def publish_state():
 		global state, sensor, image
+		
 		x,v,a,o = state.getState() # Get estimated state vector
 		
 		if(len(sensor.accel) == 0):

@@ -102,11 +102,22 @@ class ParticleFilterRBPF:
 		"""
 		
 		for keypoint in keypoints:
-			# Initialize landmark and append to particle
-			total = len(X.landmarks)
-			landmark = Landmark(total, step, keypoint.index)
-			landmark.init(X, keypoint, P, self.focus)
-			X.landmarks.append(landmark)
+			# The landmark is already observed or not?
+			result = X.findLandmark(step-1, keypoint.index)
+			if(result == "none"):
+				# Fisrt observation
+				# Initialize landmark and append to particle
+				total = len(X.landmarks)
+				landmark = Landmark(total, step, keypoint.index)
+				landmark.init(X, keypoint, P, self.focus)
+				X.landmarks.append(landmark)
+			else:
+				pass
+				# Already observed
+				# Kalman filter (Landmark update)
+			
+				# Calc likelihood
+			
 
 		return 0.0
 

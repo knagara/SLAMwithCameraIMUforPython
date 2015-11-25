@@ -131,12 +131,8 @@ class StateRBPF:
 		# covariance matrix of position
 		P = self.createPositionCovarianceMatrixFromParticle(self.X)
 
-		start_time_CAM = time.clock() #####################
 		# exec particle filter
 		self.X = self.pf.pf_step_camera(self.X, self.dt, keypoints, self.step, P, self.M)
-		end_time_CAM = time.clock() #####################
-		print "CAMtime = %f" %(end_time_CAM-start_time_CAM) #####################
-		
 
 		# Step
 		self.step += 1
