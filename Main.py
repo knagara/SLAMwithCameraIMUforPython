@@ -61,6 +61,9 @@ def main():
 	def publish_state():
 		global state, sensor, image
 		x,v,a,o = state.getState() # Get estimated state vector
+		
+		if(len(sensor.accel) == 0):
+			return
 
 		a_temp = sensor.accel_g
 		o_temp = sensor.orientation

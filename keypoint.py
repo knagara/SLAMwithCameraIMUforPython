@@ -21,6 +21,7 @@ class KeyPoint:
 		
 		self.prevIndex = int(data[0])
 		self.index = int(data[1])
-		self.x = float(data[2]) - cx
-		self.y = float(data[3]) - cy
-		self.descriptor = Descriptor(data[4])
+		self.x = float(data[4]) - cx
+		self.y = float(data[5]) - cy
+		
+		#self.descriptor = Descriptor(data[4])

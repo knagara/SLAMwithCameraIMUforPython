@@ -13,6 +13,7 @@ This class is generated from "state.py".
 
 import sys
 import math
+import time
 import cv2 as cv
 import numpy as np
 from particle_filter import ParticleFilter
@@ -68,7 +69,7 @@ class StateRBPF:
 	accel : acceleration in global coordinates
 	ori : orientaion
 	"""
-	def setSensorData(self, time, accel, ori):
+	def setSensorData(self, time_, accel, ori):
 
 		# Count
 		self.count+=1
@@ -80,7 +81,7 @@ class StateRBPF:
 
 		# Get current time
 		self.t1 = self.t
-		self.t = time
+		self.t = time_
 		self.dt = self.t - self.t1
 
 		if(self.isFirstTimeIMU):
@@ -107,7 +108,7 @@ class StateRBPF:
 	time_ : time (sec)
 	keypointPairs : list of KeyPointPair class objects
 	"""
-	def setImageData(self, time_, keypointPairs):
+	def setImageData(self, time_, keypoints):
 
 		# Count
 		self.count+=1
@@ -126,15 +127,37 @@ class StateRBPF:
 		self.t1 = self.t
 		self.t = time_
 		self.dt = self.t - self.t1
+		
+		# covariance matrix of position
+		P = self.createPositionCovarianceMatrixFromParticle(self.X)
 
+		start_time_CAM = time.clock() #####################
 		# exec particle filter
-		self.X = self.pf.pf_step_camera(self.X, self.dt, keypointPairs, self.step, self.M)
+		self.X = self.pf.pf_step_camera(self.X, self.dt, keypoints, self.step, P, self.M)
+		end_time_CAM = time.clock() #####################
+		print "CAMtime = %f" %(end_time_CAM-start_time_CAM) #####################
+		
 
 		# Step
 		self.step += 1
 
 		# Unlock IMU process
 		self.lock = False
+
+
+
+	"""
+	create covariance matrix of position from particle set
+	"""
+	def createPositionCovarianceMatrixFromParticle(self, X):
+		x = []
+		for X_ in X:
+			if(len(x)==0):
+				x = X_.x
+			else:
+				x = np.vstack((x,X_.x))
+		P = np.cov(x.T)
+		return P
 
 
 

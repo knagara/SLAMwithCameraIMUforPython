@@ -50,6 +50,8 @@ class Particle:
 			return "none"
 		
 		for landmark in reversed(self.landmarks):
+			if(landmark.step < step_):
+				break
 			if(landmark.step == step_ and landmark.index == index_):
 				return landmark
 			

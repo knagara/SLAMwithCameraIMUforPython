@@ -16,7 +16,7 @@ from math import *
 import cv2 as cv
 import numpy as np
 import Util
-from keypoint_pair import KeyPointPair
+from keypoint import KeyPoint
 
 class ImageRBPF:
 
@@ -45,10 +45,10 @@ class ImageRBPF:
 
 		time = (float(long(time_) / 1000.0))
 
-		keypointPairs = []
+		keypoints = []
 		for d in data:
 			if(d != ''):
-				keypointPairs.append(KeyPointPair(d))
+				keypoints.append(KeyPoint(d))
 
-		self.state.setImageData(time,keypointPairs)
+		self.state.setImageData(time,keypoints)
 

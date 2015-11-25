@@ -7,12 +7,12 @@ Particle Filter
 import numpy
 import copy
 import math
+from landmark import Landmark
 
 class ParticleFilterRBPF:
 
 	def __init__(self):
-		self.var_sys = 1.0
-		self.var_obs = 1.0
+		pass
 
 	def setFocus(self, f_):
 		self.focus = f_
@@ -84,7 +84,7 @@ class ParticleFilterRBPF:
 		return X_new
 
 
-	def likelihood(self, y, x):
+	def likelihood(self, keypoints, step, P, X):
 		""" Likelihood function
 		- 尤度関数
 			p(y|x) ~ exp(-1/2 * (|y-h(x)|.t * sigma * |y-h(x)|)
@@ -93,14 +93,22 @@ class ParticleFilterRBPF:
 			v ~ N(0, sigma)
 		Parameters
 		----------
-		y : 観測 Observation
+		keypoints : 観測 Observation 特徴点 keypoints
+		step : 現在のステップ数 current step
 		x : 予測　Predicted particle
 		Returns
 		-------
 		likelihood : 尤度 Likelihood
 		"""
+		
+		for keypoint in keypoints:
+			# Initialize landmark and append to particle
+			total = len(X.landmarks)
+			landmark = Landmark(total, step, keypoint.index)
+			landmark.init(X, keypoint, P, self.focus)
+			X.landmarks.append(landmark)
 
-		return 1.0
+		return 0.0
 
 
 	def resampling(self, X, W, M):
@@ -122,7 +130,7 @@ class ParticleFilterRBPF:
 		return X_resampled
 
 
-	def pf_step_camera(self, X, dt, keypoints, step, M):
+	def pf_step_camera(self, X, dt, keypoints, step, P, M):
 		""" One Step of Sampling Importance Resampling for Particle Filter
 			for IMU sensor
 		Parameters
@@ -131,6 +139,7 @@ class ParticleFilterRBPF:
 		dt : 時刻の差分 delta of time
 		keypoints : 特徴点 keypoints
 		step : 現在のステップ数 current step
+		P : デバイス位置の分散共分散行列 Variance-covariance matrix of position
 		M : パーティクルの数 num of particles
 		Returns
 		-------
@@ -145,12 +154,12 @@ class ParticleFilterRBPF:
 			# 推定 prediction
 			X_predicted[i] = self.f_camera(dt, X[i])
 			# 更新 update
-			weight[i] = self.likelihood(keypoints, X_predicted[i])
+			weight[i] = self.likelihood(keypoints, step, P, X_predicted[i])
 		# 正規化 normalization of weight
 		weight_sum = sum(weight) # 総和 the sum of weights
 		if(weight_sum > 0.5):
 			# 重みの総和が大きい（尤度が高い）場合 likelihood is high enough
-			print(weight_sum)
+			#print(weight_sum)
 			# 正規化 normalization of weight
 			for i in range(M):
 				weight[i] /= weight_sum
@@ -158,8 +167,8 @@ class ParticleFilterRBPF:
 			X_resampled = self.resampling(X_predicted, weight, M)
 		else:
 			# 重みの総和が小さい（尤度が低い）場合 likelihood is low
-			print(weight_sum),
-			print("***")
+			#print(weight_sum),
+			#print("***")
 			# リサンプリングを行わない No re-sampling
 			X_resampled = copy.deepcopy(X_predicted)
 
