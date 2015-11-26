@@ -1,11 +1,35 @@
 
 
+	def predictionAndUpdateIMU(self, X, dt, accel, ori, M, noise_a_sys):
+		print("start")
+		queue = multiprocessing.Queue()
+		jobs = []
+		for Xlist in list(more_itertools.chunked(X, int(M/4))):
+			job = multiprocessing.Process(target=worker_IMU, args=(queue, Xlist, dt, accel, ori, noise_a_sys))
+			jobs.append(job)
+			job.start()
+		[j.join() for j in jobs]
+		return [queue.get() for i in xrange(M)]
 
 
 
-		start_time_CAM = time.clock() #####################
-		end_time_CAM = time.clock() #####################
-		print "CAMtime = %f" %(end_time_CAM-start_time_CAM) #####################
+
+	def predictionAndUpdateIMU(self, X, X_predicted, dt, accel, ori, M, noise_a_sys):
+		pool = mp.Pool(mp.cpu_count())
+		results = [pool.apply_async(f_IMU, args=(Xi, dt, accel, ori, noise_a_sys)) for Xi in X]    
+		output = [p.get() for p in results]
+		pool.close()
+		pool.join()
+		return output
+
+
+
+
+
+
+		start_time_ = time.clock() #####################
+		end_time_ = time.clock() #####################
+		print "time = %f" %(end_time_-start_time_) #####################
 
 
 

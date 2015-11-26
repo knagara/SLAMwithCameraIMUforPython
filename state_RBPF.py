@@ -3,7 +3,7 @@
 """
 state_RBPF.py
 
-author: Keita Nagara (University of Tokyo)
+author: Keita Nagara (University of Tokyo) <nagara.keita()gmail.com>
 
 State and estimation model of Rao-Blackwellized Particle Filter.
 
@@ -88,8 +88,11 @@ class StateRBPF:
 			# init particle
 			self.X = self.initParticle(accel, ori)
 		else:
+			start_time_ = time.clock() #####################
 			# exec particle filter
 			self.X = self.pf.pf_step_IMU(self.X, self.dt, accel, ori, self.M)
+			end_time_ = time.clock() #####################
+			print "time = %f" %(end_time_-start_time_) #####################
 			""" The code below is used to get loglikelihood to decide parameters.
 			self.X, likelihood = self.pf.pf_step_IMU(self.X, self.t - self.t1, accel, ori, self.M)
 			self.loglikelihood += math.log(likelihood)

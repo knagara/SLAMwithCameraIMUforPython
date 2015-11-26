@@ -3,7 +3,7 @@
 """
 sensor.py
 
-author: Keita Nagara (University of Tokyo)
+author: Keita Nagara (University of Tokyo) <nagara.keita()gmail.com>
 
 This class is called from "Main.py", and process sensor data.
 

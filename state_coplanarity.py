@@ -3,7 +3,7 @@
 """
 state_coplanarity.py
 
-author: Keita Nagara (University of Tokyo)
+author: Keita Nagara (University of Tokyo) <nagara.keita()gmail.com>
 
 State and estimation model of Coplanarity (IMU with Kalman Filter & Camera with Particle Filter. Observation model is coplanarity. State vector is device state only).
 

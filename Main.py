@@ -3,7 +3,7 @@
 """
 Main.py
 
-author: Keita Nagara　永良慶太 (University of Tokyo)
+author: Keita Nagara　永良慶太 (University of Tokyo) <nagara.keita()gmail.com>
 
 The process starts from this program.
 This program receives data from Android application via MQTT, and then send the data to Sensor class or Image class.
@@ -91,6 +91,9 @@ def main():
 
 		#Process data in senser.py or image.py
 		if(str(msg.topic) == "SLAM/input/camera"): #image.py
+			return
+			if(model == "IMUKF" or model == "IMUPF" or model == "IMUPF2"):
+				return
 			#print("+"),
 			data_ = str(msg.payload).split('$') # time$data&data&...
 			time = data_[0]
