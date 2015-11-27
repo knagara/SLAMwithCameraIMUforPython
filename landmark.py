@@ -14,10 +14,7 @@ import Util
 
 class Landmark:
 
-	def __init__(self, id_, step_, index_):
-		self.id = id_
-		self.step = step_
-		self.index = index_
+	def __init__(self):
 		self.mu = np.array([0.0,0.0,0.0,0.0,0.0,0.0])
 		self.sigma = np.zeros([])
 		

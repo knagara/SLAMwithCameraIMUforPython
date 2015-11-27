@@ -88,11 +88,8 @@ class StateRBPF:
 			# init particle
 			self.X = self.initParticle(accel, ori)
 		else:
-			start_time_ = time.clock() #####################
 			# exec particle filter
 			self.X = self.pf.pf_step_IMU(self.X, self.dt, accel, ori, self.M)
-			end_time_ = time.clock() #####################
-			print "time = %f" %(end_time_-start_time_) #####################
 			""" The code below is used to get loglikelihood to decide parameters.
 			self.X, likelihood = self.pf.pf_step_IMU(self.X, self.t - self.t1, accel, ori, self.M)
 			self.loglikelihood += math.log(likelihood)
@@ -133,10 +130,10 @@ class StateRBPF:
 		
 		# covariance matrix of position
 		P = self.createPositionCovarianceMatrixFromParticle(self.X)
-
+		
 		# exec particle filter
 		self.X = self.pf.pf_step_camera(self.X, self.dt, keypoints, self.step, P, self.M)
-
+		
 		# Step
 		self.step += 1
 
@@ -174,5 +171,6 @@ class StateRBPF:
 			v.append(X_.v)
 			a.append(X_.a)
 			o.append(X_.o)
+		#print(np.var(x, axis=0))
 		return np.mean(x, axis=0),np.mean(v, axis=0),np.mean(a, axis=0),np.mean(o, axis=0)
 

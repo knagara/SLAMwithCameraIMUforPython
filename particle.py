@@ -9,6 +9,7 @@ Class for particle
 """
 
 import numpy as np
+import time
 
 
 class Particle:
@@ -20,7 +21,7 @@ class Particle:
 		self.a = np.array([0.0,0.0,0.0])
 		self.o = np.array([0.0,0.0,0.0])
 
-		self.landmarks = []
+		self.landmarks = {}
 		
 		
 	def initWithMu(self,mu):
@@ -42,18 +43,10 @@ class Particle:
 		self.a = np.array([state[6],state[7],state[8]])
 		self.o = np.array([state[9],state[10],state[11]])
 		
-	
-	def findLandmark(self, step_, index_):
-		if(step_ == -1):
-			return "none"
-			
-		if(len(self.landmarks) == 0):
-			return "none"
+
+	def appendLandmark(self, key, landmark):
+		self.landmarks[key] = landmark		
 		
-		for landmark in reversed(self.landmarks):
-			if(landmark.step < step_):
-				break
-			if(landmark.step == step_ and landmark.index == index_):
-				return landmark
-			
-		return "none"
+		
+		
+		

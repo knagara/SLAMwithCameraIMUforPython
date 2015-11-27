@@ -22,7 +22,6 @@ If you want to run this program, you must prepare your own server and install MQ
 
 """
 
-import time
 import paho.mqtt.client as mqtt
 from sensor import Sensor
 from state import State
@@ -91,7 +90,6 @@ def main():
 
 		#Process data in senser.py or image.py
 		if(str(msg.topic) == "SLAM/input/camera"): #image.py
-			return
 			if(model == "IMUKF" or model == "IMUPF" or model == "IMUPF2"):
 				return
 			#print("+"),
