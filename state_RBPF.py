@@ -49,8 +49,8 @@ class StateRBPF:
 		self.pf.setParameter(self.noise_a_sys, self.noise_g_sys) #パーティクルフィルタのパラメータ（ノイズ） parameters (noise)
 		self.X = [] # パーティクルセット set of particles
 		self.loglikelihood = 0.0
-		self.count = 0
-		self.step = 0
+		self.count = 1
+		self.step = 1
 
 
 	def initParticle(self, accel, ori):
@@ -70,9 +70,6 @@ class StateRBPF:
 	ori : orientaion
 	"""
 	def setSensorData(self, time_, accel, ori):
-
-		# Count
-		self.count+=1
 
 		# If process is locked by Image Particle Filter, do nothing
 		if(self.lock):
@@ -101,6 +98,8 @@ class StateRBPF:
 		if(self.isFirstTimeIMU):
 			self.isFirstTimeIMU = False
 
+		# Count
+		self.count+=1
 
 
 	"""
@@ -109,9 +108,6 @@ class StateRBPF:
 	keypointPairs : list of KeyPointPair class objects
 	"""
 	def setImageData(self, time_, keypoints):
-
-		# Count
-		self.count+=1
 
 		# If IMU data has not been arrived yet, do nothing
 		if(self.isFirstTimeIMU):
@@ -133,10 +129,13 @@ class StateRBPF:
 		
 		# exec particle filter
 		self.X = self.pf.pf_step_camera(self.X, self.dt, keypoints, self.step, P, self.M)
-		
-		# Step
-		self.step += 1
 
+		# Count
+		self.count+=1
+		
+		# Step (camera only observation step)
+		self.step += 1
+		
 		# Unlock IMU process
 		self.lock = False
 

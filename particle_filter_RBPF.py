@@ -83,14 +83,17 @@ class ParticleFilterRBPF:
 			# previous landmark id
 			prevLandmarkId = (step-1)*10000 + keypoint.prevIndex
 			# new landmark id
-			landmarkId = step*10000 + keypoint.index 
+			landmarkId = step*10000 + keypoint.index
 			# The landmark is already observed or not?
+			start_time_ = time.clock() #####################
 			if(X.landmarks.has_key(prevLandmarkId) == False):
 				# Fisrt observation
 				# Initialize landmark and append to particle
 				landmark = Landmark()
 				landmark.init(X, keypoint, P, self.focus)
 				X.landmarks[landmarkId] = landmark
+				end_time_ = time.clock() #####################
+				print "init   time = %f" %(end_time_-start_time_) #####################
 			else:
 				# Already observed
 				X.landmarks[landmarkId] = X.landmarks[prevLandmarkId]
@@ -99,6 +102,8 @@ class ParticleFilterRBPF:
 			
 				# Calc likelihood
 			
+				end_time_ = time.clock() #####################
+				print "update time = %f" %(end_time_-start_time_) #####################
 
 		return 1.0
 
@@ -124,14 +129,13 @@ class ParticleFilterRBPF:
 		
 	
 	def predictionAndUpdate(self, X, dt, keypoints, step, P):
+		
 		# 推定 prediction
 		dt2 = 0.5*dt*dt
 		X_predicted = [self.f_camera(Xi, dt, dt2, numpy.random.normal(0, self.noise_a_sys, 3)) for Xi in X]
+			
 		# 更新 update
-		start_time_ = time.clock() #####################
 		weight = [self.likelihood(keypoints, step, P, Xi) for Xi in X_predicted]
-		end_time_ = time.clock() #####################
-		print "time = %f" %(end_time_-start_time_) #####################
 		
 		return X_predicted, weight
 			
