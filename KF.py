@@ -4,6 +4,36 @@ import copy
 import numpy as np
 
 
+def execKF1Update(z, mu0, Sigma0, H, R):
+    '''Linear Kalman Filter
+
+    - 観測方程式
+        z = H * x + v, v ~ N(0,R)
+
+    Parameters
+    ==========
+    - z : 観測列
+    - mu0 : 初期状態推定値
+    - Sigma0 : 初期誤差共分散行列
+    - H, R : カルマンフィルタの係数
+
+    Returns
+    =======
+    - M : 状態推定値列
+    '''
+
+    mu = copy.deepcopy(mu0) # 初期状態推定値
+    Sigma = copy.deepcopy(Sigma0) # 初期誤差共分散行列
+
+    # 更新
+    S = H.dot(Sigma.dot(H.T)) + R
+    K = Sigma.dot(H.T.dot(np.linalg.inv(S)))
+    mu = mu + K.dot(z - H.dot(mu))
+    Sigma = Sigma - K.dot(H.dot(Sigma))
+
+    return (mu, Sigma)
+
+
 def execKF1Simple(Y, mu0, Sigma0, A, C, Q, R):
     '''Linear Kalman Filter
 

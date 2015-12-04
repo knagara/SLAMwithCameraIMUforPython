@@ -9,19 +9,27 @@ import numpy
 import copy
 from particle import Particle
 from landmark import Landmark
+import KF
 
 
 class ParticleFilterRBPF:
 
 	def __init__(self):
+		###########################
+		self.count=0
+		###########################
 		pass
 
 	def setFocus(self, f_):
 		self.focus = f_
 
-	def setParameter(self, param1, param2):
+	def setParameter(self, param1, param2, param3):
 		self.noise_a_sys = param1 # system noise of acceleration　加速度のシステムノイズ
 		self.noise_g_sys = param2 # system noise of gyro　ジャイロのシステムノイズ
+		self.noise_camera = param3 # observation noise of camera カメラの観測ノイズ
+		
+		self.R = numpy.array([[self.noise_camera, 0 ],
+						[0, self.noise_camera]])
 
 
 	def f_IMU(self, X, dt, dt2, accel, ori, noise):
@@ -35,10 +43,12 @@ class ParticleFilterRBPF:
 		X_new.landmarks = X.landmarks
 	
 		# Transition with noise (only x,v)		
-		X_new.x = X.x + dt*X.v + dt2*X.a + dt2*noise
+		#X_new.x = X.x + dt*X.v + dt2*X.a + dt2*noise
+		X_new.x = numpy.array([0.0,0.0,0.0])
 		X_new.v = X.v + dt*X.a + dt*noise
 		X_new.a = accel
-		X_new.o = ori
+		#X_new.o = ori
+		X_new.o = numpy.array([1.0,0.5,1.0])
 	
 		return X_new
 
@@ -54,13 +64,15 @@ class ParticleFilterRBPF:
 		X_new.landmarks = X.landmarks
 		
 		# Transition with noise (only x,v)		
-		X_new.x = X.x + dt*X.v + dt2*X.a + dt2*noise
+		#X_new.x = X.x + dt*X.v + dt2*X.a + dt2*noise
+		X_new.x = numpy.array([0.0,0.0,0.0])
 		X_new.v = X.v + dt*X.a + dt*noise
 		X_new.a = X.a
-		X_new.o = X.o
+		#X_new.o = X.o
+		X_new.o = numpy.array([1.0,0.5,1.0])
 
 		return X_new
-
+	
 
 	def likelihood(self, keypoints, step, P, X):
 		""" Likelihood function
@@ -79,6 +91,9 @@ class ParticleFilterRBPF:
 		likelihood : 尤度 Likelihood
 		"""
 		
+		rss = 0.0 # Residual sum of squares
+		likelihood = 0.0 # Likelihood
+		
 		for keypoint in keypoints:
 			# previous landmark id
 			prevLandmarkId = (step-1)*10000 + keypoint.prevIndex
@@ -92,20 +107,49 @@ class ParticleFilterRBPF:
 				landmark = Landmark()
 				landmark.init(X, keypoint, P, self.focus)
 				X.landmarks[landmarkId] = landmark
+				###############################
 				end_time_ = time.clock() #####################
-				print "init   time = %f" %(end_time_-start_time_) #####################
+				if(self.count == 0): ###############################
+					pass
+					#print ""+str(landmarkId)+" init   time = %f" %(end_time_-start_time_) #####################
+				###############################
 			else:
 				# Already observed
 				X.landmarks[landmarkId] = X.landmarks[prevLandmarkId]
 				del X.landmarks[prevLandmarkId]
+				# Observation z				
+				z = numpy.array([keypoint.x, keypoint.y])
+				# Calc h and H (Jacobian matrix of h)
+				h, H = X.landmarks[landmarkId].calcObservation(X, self.focus)
+				###############################
+				if(self.count == 0): ###############################
+					print("z "),
+					print(z)
+					print("h "),
+					print(h)
+					print("Hx"),
+					print(H.dot(X.landmarks[landmarkId].mu))
+				###############################
 				# Kalman filter (Landmark update)
-			
-				# Calc likelihood
-			
+				X.landmarks[landmarkId].mu, X.landmarks[landmarkId].sigma = KF.execKF1Update(z, X.landmarks[landmarkId].mu, X.landmarks[landmarkId].sigma, H, self.R)
+				# Calc residual sum of squares
+				rss += (z-h).T.dot(z-h)
+				###############################
 				end_time_ = time.clock() #####################
-				print "update time = %f" %(end_time_-start_time_) #####################
+				if(self.count == 0): ###############################
+					pass
+					#print ""+str(landmarkId)+" update time = %f" %(end_time_-start_time_) #####################
+				###############################
 
-		return 1.0
+		likelihood = numpy.exp( (-0.5*rss) / (self.noise_camera*len(keypoints)) )
+
+		###############################
+		if(self.count == 0):
+			print("rss "+str(rss))
+		###########################
+		self.count+=1
+		###########################
+		return likelihood
 
 
 	def resampling(self, X, W, M):
@@ -134,6 +178,10 @@ class ParticleFilterRBPF:
 		dt2 = 0.5*dt*dt
 		X_predicted = [self.f_camera(Xi, dt, dt2, numpy.random.normal(0, self.noise_a_sys, 3)) for Xi in X]
 			
+		###########################
+		self.count=0
+		###########################
+		
 		# 更新 update
 		weight = [self.likelihood(keypoints, step, P, Xi) for Xi in X_predicted]
 		

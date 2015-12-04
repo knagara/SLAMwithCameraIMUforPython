@@ -28,6 +28,7 @@ class StateRBPF:
 		# Particle Filter
 		self.noise_a_sys = 0.01 # system noise of acceleration　加速度のシステムノイズ
 		self.noise_g_sys = 0.01 # system noise of gyro　ジャイロのシステムノイズ
+		self.noise_camera = 0.1 # observation noise of camera カメラの観測ノイズ
 		# ----- Set parameters here! ----- #
 
 		self.init()
@@ -46,7 +47,7 @@ class StateRBPF:
 	def initParticleFilter(self):
 		self.pf = ParticleFilter().getParticleFilterClass("RBPF")
 		self.pf.setFocus(self.f)
-		self.pf.setParameter(self.noise_a_sys, self.noise_g_sys) #パーティクルフィルタのパラメータ（ノイズ） parameters (noise)
+		self.pf.setParameter(self.noise_a_sys, self.noise_g_sys, self.noise_camera) #パーティクルフィルタのパラメータ（ノイズ） parameters (noise)
 		self.X = [] # パーティクルセット set of particles
 		self.loglikelihood = 0.0
 		self.count = 1
@@ -55,9 +56,9 @@ class StateRBPF:
 
 	def initParticle(self, accel, ori):
 		X = []
-		particle = Particle()
-		particle.initWithIMU(accel, ori)
-		for i in range(self.M):
+		for i in xrange(self.M):
+			particle = Particle()
+			particle.initWithIMU(accel, ori)
 			X.append(particle)
 		return X
 
