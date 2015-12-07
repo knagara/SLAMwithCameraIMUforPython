@@ -43,12 +43,12 @@ class ParticleFilterRBPF:
 		X_new.landmarks = X.landmarks
 	
 		# Transition with noise (only x,v)		
-		#X_new.x = X.x + dt*X.v + dt2*X.a + dt2*noise
-		X_new.x = numpy.array([0.0,0.0,0.0])
+		X_new.x = X.x + dt*X.v + dt2*X.a + dt2*noise
+		#X_new.x = numpy.array([0.0,0.0,0.0]) ###################################
 		X_new.v = X.v + dt*X.a + dt*noise
 		X_new.a = accel
-		#X_new.o = ori
-		X_new.o = numpy.array([1.0,0.5,1.0])
+		X_new.o = ori
+		#X_new.o = numpy.array([1.0,0.5,1.0]) ###################################
 	
 		return X_new
 
@@ -64,12 +64,12 @@ class ParticleFilterRBPF:
 		X_new.landmarks = X.landmarks
 		
 		# Transition with noise (only x,v)		
-		#X_new.x = X.x + dt*X.v + dt2*X.a + dt2*noise
-		X_new.x = numpy.array([0.0,0.0,0.0])
+		X_new.x = X.x + dt*X.v + dt2*X.a + dt2*noise
+		#X_new.x = numpy.array([0.0,0.0,0.0]) ###################################
 		X_new.v = X.v + dt*X.a + dt*noise
 		X_new.a = X.a
-		#X_new.o = X.o
-		X_new.o = numpy.array([1.0,0.5,1.0])
+		X_new.o = X.o
+		#X_new.o = numpy.array([1.0,0.5,1.0]) ###################################
 
 		return X_new
 	
@@ -100,7 +100,9 @@ class ParticleFilterRBPF:
 			# new landmark id
 			landmarkId = step*10000 + keypoint.index
 			# The landmark is already observed or not?
-			start_time_ = time.clock() #####################
+			#############################
+			start_time_ = time.clock() 
+			#############################
 			if(X.landmarks.has_key(prevLandmarkId) == False):
 				# Fisrt observation
 				# Initialize landmark and append to particle
@@ -121,17 +123,8 @@ class ParticleFilterRBPF:
 				z = numpy.array([keypoint.x, keypoint.y])
 				# Calc h and H (Jacobian matrix of h)
 				h, H = X.landmarks[landmarkId].calcObservation(X, self.focus)
-				###############################
-				if(self.count == 0): ###############################
-					print("z "),
-					print(z)
-					print("h "),
-					print(h)
-					print("Hx"),
-					print(H.dot(X.landmarks[landmarkId].mu))
-				###############################
 				# Kalman filter (Landmark update)
-				X.landmarks[landmarkId].mu, X.landmarks[landmarkId].sigma = KF.execKF1Update(z, X.landmarks[landmarkId].mu, X.landmarks[landmarkId].sigma, H, self.R)
+				X.landmarks[landmarkId].mu, X.landmarks[landmarkId].sigma = KF.execEKF1Update(z, h, X.landmarks[landmarkId].mu, X.landmarks[landmarkId].sigma, H, self.R)
 				# Calc residual sum of squares
 				rss += (z-h).T.dot(z-h)
 				###############################
@@ -232,11 +225,25 @@ class ParticleFilterRBPF:
 		X_resampled = range(M)
 
 		
+		#############################
+		start_time_ = time.clock() 
+		#############################
 		# 推定と更新 prediction and update
 		X_predicted, weight = self.predictionAndUpdate(X, dt, keypoints, step, P)
+		###############################
+		end_time_ = time.clock()
+		#print "update   time = %f" %(end_time_-start_time_) 
+		###############################
 		
+		#############################
+		start_time_ = time.clock() 
+		#############################
 		# 正規化とリサンプリング normalization and resampling
 		X_resampled = self.normalizationAndResampling(X_predicted, weight, M)
+		###############################
+		end_time_ = time.clock()
+		#print "resample time = %f" %(end_time_-start_time_) 
+		###############################
 
 		return X_resampled
 

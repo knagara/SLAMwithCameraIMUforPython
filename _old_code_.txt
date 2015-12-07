@@ -3,6 +3,23 @@
 
 
 
+
+
+
+				###############################
+				if(self.count == 0): ###############################
+					print("z "),
+					print(z)
+					print("h "),
+					print(h)
+					print("Hx"),
+					print(H.dot(X.landmarks[landmarkId].mu))
+				###############################
+
+
+
+
+
 class Landmark:
 
 	def __init__(self, id_, step_, index_):

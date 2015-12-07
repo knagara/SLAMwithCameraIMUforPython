@@ -4,7 +4,7 @@ import copy
 import numpy as np
 
 
-def execKF1Update(z, mu0, Sigma0, H, R):
+def execEKF1Update(z, h, mu0, Sigma0, H, R):
     '''Linear Kalman Filter
 
     - 観測方程式
@@ -28,7 +28,7 @@ def execKF1Update(z, mu0, Sigma0, H, R):
     # 更新
     S = H.dot(Sigma.dot(H.T)) + R
     K = Sigma.dot(H.T.dot(np.linalg.inv(S)))
-    mu = mu + K.dot(z - H.dot(mu))
+    mu = mu + K.dot(z - h)
     Sigma = Sigma - K.dot(H.dot(Sigma))
 
     return (mu, Sigma)
