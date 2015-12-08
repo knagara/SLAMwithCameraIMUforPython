@@ -27,11 +27,12 @@ def execEKF1Update(z, h, mu0, Sigma0, H, R):
 
     # 更新
     S = H.dot(Sigma.dot(H.T)) + R
-    K = Sigma.dot(H.T.dot(np.linalg.inv(S)))
+    Sinv = np.linalg.inv(S)
+    K = Sigma.dot(H.T.dot(Sinv))
     mu = mu + K.dot(z - h)
     Sigma = Sigma - K.dot(H.dot(Sigma))
 
-    return (mu, Sigma)
+    return (mu, Sigma, S, Sinv)
 
 
 def execKF1Simple(Y, mu0, Sigma0, A, C, Q, R):

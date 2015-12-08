@@ -3,6 +3,128 @@
 
 
 
+	def pf_step_camera(self, X, dt, keypoints, step, P, M):
+		""" One Step of Sampling Importance Resampling for Particle Filter
+			for IMU sensor
+		Parameters
+		----------
+		X : 状態 List of state set
+		dt : 時刻の差分 delta of time
+		keypoints : 特徴点 keypoints
+		step : 現在のステップ数 current step
+		P : デバイス位置の分散共分散行列 Variance-covariance matrix of position
+		M : パーティクルの数 num of particles
+		Returns
+		-------
+		X_resampled : 次の状態 List updated state
+		"""
+
+		# 初期化 init
+		X_predicted = range(M)
+		weight = range(M)
+		X_resampled = range(M)
+
+		
+		#############################
+		start_time_ = time.clock() 
+		#############################
+		# 推定と更新 prediction and update
+		X_predicted, weight = self.predictionAndUpdate(X, dt, keypoints, step, P)
+		###############################
+		end_time_ = time.clock()
+		#print "update   time = %f" %(end_time_-start_time_) 
+		###############################
+		
+		#############################
+		start_time_ = time.clock() 
+		#############################
+		# 正規化とリサンプリング normalization and resampling
+		X_resampled = self.normalizationAndResampling(X_predicted, weight, M)
+		###############################
+		end_time_ = time.clock()
+		#print "resample time = %f" %(end_time_-start_time_) 
+		###############################
+
+		return X_resampled
+
+
+
+
+
+
+
+	def likelihood(self, keypoints, step, P, X):
+		""" Likelihood function
+		- 尤度関数
+			p(y|x) ~ exp(-1/2 * (|y-h(x)|.t * sigma * |y-h(x)|)
+		- 観測モデル
+			z = h(x) + v
+			v ~ N(0, sigma)
+		Parameters
+		----------
+		keypoints : 観測 Observation 特徴点 keypoints
+		step : 現在のステップ数 current step
+		x : 予測　Predicted particle
+		Returns
+		-------
+		likelihood : 尤度 Likelihood
+		"""
+		
+		rss = 0.0 # Residual sum of squares
+		likelihood = 0.0 # Likelihood
+		
+		for keypoint in keypoints:
+			# previous landmark id
+			prevLandmarkId = (step-1)*10000 + keypoint.prevIndex
+			# new landmark id
+			landmarkId = step*10000 + keypoint.index
+			# The landmark is already observed or not?
+			#############################
+			start_time_ = time.clock() 
+			#############################
+			if(X.landmarks.has_key(prevLandmarkId) == False):
+				# Fisrt observation
+				# Initialize landmark and append to particle
+				landmark = Landmark()
+				landmark.init(X, keypoint, P, self.focus)
+				X.landmarks[landmarkId] = landmark
+				###############################
+				end_time_ = time.clock() #####################
+				if(self.count == 0): ###############################
+					pass
+					#print ""+str(landmarkId)+" init   time = %f" %(end_time_-start_time_) #####################
+				###############################
+			else:
+				# Already observed
+				X.landmarks[landmarkId] = X.landmarks[prevLandmarkId]
+				del X.landmarks[prevLandmarkId]
+				# Observation z				
+				z = numpy.array([keypoint.x, keypoint.y])
+				# Calc h and H (Jacobian matrix of h)
+				h, H = X.landmarks[landmarkId].calcObservation(X, self.focus)
+				# Kalman filter (Landmark update)
+				X.landmarks[landmarkId].mu, X.landmarks[landmarkId].sigma = KF.execEKF1Update(z, h, X.landmarks[landmarkId].mu, X.landmarks[landmarkId].sigma, H, self.R)
+				# Calc residual sum of squares
+				rss += (z-h).T.dot(z-h)
+				###############################
+				end_time_ = time.clock() #####################
+				if(self.count == 0): ###############################
+					pass
+					#print ""+str(landmarkId)+" update time = %f" %(end_time_-start_time_) #####################
+				###############################
+
+		likelihood = numpy.exp( (-0.5*rss) / (self.noise_camera*len(keypoints)) )
+
+		###############################
+		if(self.count == 0):
+			print("rss "+str(rss))
+		###########################
+		self.count+=1
+		###########################
+		return likelihood
+
+
+
 
 
 

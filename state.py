@@ -3,7 +3,7 @@
 """
 state.py
 
-author: Keita Nagara (University of Tokyo) <nagara.keita()gmail.com>
+author: Keita Nagara　永良慶太 (University of Tokyo) <nagara.keita()gmail.com>
 
 This class is called from "sensor.py" and "image.py", and estimate state variables.
 This class is factory class. Model (state type & estimation model) is selected by argment.

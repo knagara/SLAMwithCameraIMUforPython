@@ -3,7 +3,7 @@
 """
 state_RBPF.py
 
-author: Keita Nagara (University of Tokyo) <nagara.keita()gmail.com>
+author: Keita Nagara　永良慶太 (University of Tokyo) <nagara.keita()gmail.com>
 
 State and estimation model of Rao-Blackwellized Particle Filter.
 
@@ -28,7 +28,7 @@ class StateRBPF:
 		# Particle Filter
 		self.noise_a_sys = 0.01 # system noise of acceleration　加速度のシステムノイズ
 		self.noise_g_sys = 0.01 # system noise of gyro　ジャイロのシステムノイズ
-		self.noise_camera = 0.1 # observation noise of camera カメラの観測ノイズ
+		self.noise_camera = 100.0 # observation noise of camera カメラの観測ノイズ
 		# ----- Set parameters here! ----- #
 
 		self.init()
@@ -61,6 +61,10 @@ class StateRBPF:
 			particle.initWithIMU(accel, ori)
 			X.append(particle)
 		return X
+		
+	
+	def setObservationModel(self, observation_):
+		self.pf.setObservationModel(observation_)
 
 
 

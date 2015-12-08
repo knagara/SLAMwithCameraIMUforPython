@@ -7,6 +7,7 @@ Particle Filter
 import time
 import numpy
 import copy
+import math
 from particle import Particle
 from landmark import Landmark
 import KF
@@ -31,6 +32,8 @@ class ParticleFilterRBPF:
 		self.R = numpy.array([[self.noise_camera, 0 ],
 						[0, self.noise_camera]])
 
+	def setObservationModel(self, observation_):
+		self.observation = observation_
 
 	def f_IMU(self, X, dt, dt2, accel, ori, noise):
 		""" Transition model
@@ -91,8 +94,14 @@ class ParticleFilterRBPF:
 		likelihood : 尤度 Likelihood
 		"""
 		
-		rss = 0.0 # Residual sum of squares
 		likelihood = 0.0 # Likelihood
+		
+		xt = X.x[0]
+		yt = X.x[1]
+		zt = X.x[2]
+		ox = X.o[0]
+		oy = X.o[1]
+		oz = X.o[2]
 		
 		for keypoint in keypoints:
 			# previous landmark id
@@ -100,21 +109,12 @@ class ParticleFilterRBPF:
 			# new landmark id
 			landmarkId = step*10000 + keypoint.index
 			# The landmark is already observed or not?
-			#############################
-			start_time_ = time.clock() 
-			#############################
 			if(X.landmarks.has_key(prevLandmarkId) == False):
 				# Fisrt observation
 				# Initialize landmark and append to particle
 				landmark = Landmark()
 				landmark.init(X, keypoint, P, self.focus)
 				X.landmarks[landmarkId] = landmark
-				###############################
-				end_time_ = time.clock() #####################
-				if(self.count == 0): ###############################
-					pass
-					#print ""+str(landmarkId)+" init   time = %f" %(end_time_-start_time_) #####################
-				###############################
 			else:
 				# Already observed
 				X.landmarks[landmarkId] = X.landmarks[prevLandmarkId]
@@ -122,23 +122,51 @@ class ParticleFilterRBPF:
 				# Observation z				
 				z = numpy.array([keypoint.x, keypoint.y])
 				# Calc h and H (Jacobian matrix of h)
-				h, H = X.landmarks[landmarkId].calcObservation(X, self.focus)
-				# Kalman filter (Landmark update)
-				X.landmarks[landmarkId].mu, X.landmarks[landmarkId].sigma = KF.execEKF1Update(z, h, X.landmarks[landmarkId].mu, X.landmarks[landmarkId].sigma, H, self.R)
-				# Calc residual sum of squares
-				rss += (z-h).T.dot(z-h)
+				xi = X.landmarks[landmarkId].mu[0]
+				yi = X.landmarks[landmarkId].mu[1]
+				zi = X.landmarks[landmarkId].mu[2]
+				theta = X.landmarks[landmarkId].mu[3]
+				phi = X.landmarks[landmarkId].mu[4]
+				p = X.landmarks[landmarkId].mu[5]
+				h = numpy.array([self.observation.fh1(self.focus, xt, yt, zt, ox, oy, oz, xi, yi, zi, theta, phi, p),
+								self.observation.fh2(self.focus, xt, yt, zt, ox, oy, oz, xi, yi, zi, theta, phi, p)])
+				H = numpy.array([[self.observation.fdh1xi(self.focus, xt, yt, zt, ox, oy, oz, xi, yi, zi, theta, phi, p), 
+								self.observation.fdh1yi(self.focus, xt, yt, zt, ox, oy, oz, xi, yi, zi, theta, phi, p), 
+								self.observation.fdh1zi(self.focus, xt, yt, zt, ox, oy, oz, xi, yi, zi, theta, phi, p), 
+								self.observation.fdh1theta(self.focus, xt, yt, zt, ox, oy, oz, xi, yi, zi, theta, phi, p), 
+								self.observation.fdh1phi(self.focus, xt, yt, zt, ox, oy, oz, xi, yi, zi, theta, phi, p), 
+								self.observation.fdh1p(self.focus, xt, yt, zt, ox, oy, oz, xi, yi, zi, theta, phi, p)],
+								[self.observation.fdh2xi(self.focus, xt, yt, zt, ox, oy, oz, xi, yi, zi, theta, phi, p), 
+								self.observation.fdh2yi(self.focus, xt, yt, zt, ox, oy, oz, xi, yi, zi, theta, phi, p), 
+								self.observation.fdh2zi(self.focus, xt, yt, zt, ox, oy, oz, xi, yi, zi, theta, phi, p), 
+								self.observation.fdh2theta(self.focus, xt, yt, zt, ox, oy, oz, xi, yi, zi, theta, phi, p), 
+								self.observation.fdh2phi(self.focus, xt, yt, zt, ox, oy, oz, xi, yi, zi, theta, phi, p), 
+								self.observation.fdh2p(self.focus, xt, yt, zt, ox, oy, oz, xi, yi, zi, theta, phi, p)]])
+				h_, H_ = X.landmarks[landmarkId].calcObservation(X, self.focus)
+				
 				###############################
-				end_time_ = time.clock() #####################
 				if(self.count == 0): ###############################
-					pass
-					#print ""+str(landmarkId)+" update time = %f" %(end_time_-start_time_) #####################
+					print("z "),
+					print(z)
+					print("h "),
+					print(h)
+					print("h_ "),
+					print(h_)
+					print("H"),
+					print(H)
+					print("H_"),
+					print(H_)
 				###############################
-
-		likelihood = numpy.exp( (-0.5*rss) / (self.noise_camera*len(keypoints)) )
+					
+				# Kalman filter (Landmark update)
+				X.landmarks[landmarkId].mu, X.landmarks[landmarkId].sigma, S, Sinv = KF.execEKF1Update(z, h, X.landmarks[landmarkId].mu, X.landmarks[landmarkId].sigma, H, self.R)
+				# Calc likelihood
+				likelihood += (1.0 / (math.sqrt( numpy.linalg.det(2.0 * math.pi * S) ))) * numpy.exp( -0.5 * ( (z-h).T.dot(Sinv.dot(z-h)) ) )
 
 		###############################
-		if(self.count == 0):
-			print("rss "+str(rss))
+		#print("likelihood "+str(likelihood))
+		#if(self.count == 0):
+		#	print("likelihood "+str(likelihood))
 		###########################
 		self.count+=1
 		###########################
@@ -184,9 +212,9 @@ class ParticleFilterRBPF:
 	def normalizationAndResampling(self, X_predicted, weight, M):
 		# 正規化 normalization of weight
 		weight_sum = sum(weight) # 総和 the sum of weights
-		if(weight_sum > 0.5):
+		if(weight_sum > 0.0005):
 			# 重みの総和が大きい（尤度が高い）場合 likelihood is high enough
-			#print(weight_sum)     #########################
+			print(weight_sum)     #########################
 			# 正規化 normalization of weight
 			weight = [(w/weight_sum) for w in weight]
 			#for i in xrange(M):
@@ -195,8 +223,9 @@ class ParticleFilterRBPF:
 			X_resampled = self.resampling(X_predicted, weight, M)
 		else:
 			# 重みの総和が小さい（尤度が低い）場合 likelihood is low
-			#print(weight_sum),    #########################
-			#print("***")          #########################
+			print(weight_sum),    #########################
+			
+			print("***")          #########################
 			# リサンプリングを行わない No re-sampling
 			X_resampled = X_predicted
 			
@@ -235,15 +264,8 @@ class ParticleFilterRBPF:
 		#print "update   time = %f" %(end_time_-start_time_) 
 		###############################
 		
-		#############################
-		start_time_ = time.clock() 
-		#############################
 		# 正規化とリサンプリング normalization and resampling
 		X_resampled = self.normalizationAndResampling(X_predicted, weight, M)
-		###############################
-		end_time_ = time.clock()
-		#print "resample time = %f" %(end_time_-start_time_) 
-		###############################
 
 		return X_resampled
 

@@ -3,7 +3,7 @@
 """
 descriptor.py
 
-author: Keita Nagara (University of Tokyo)
+author: Keita Nagara　永良慶太 (University of Tokyo) <nagara.keita()gmail.com>
 
 Class for descriptor in image
 """

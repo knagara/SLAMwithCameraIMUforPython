@@ -3,7 +3,7 @@
 """
 landmark.py
 
-author: Keita Nagara (University of Tokyo)
+author: Keita Nagara　永良慶太 (University of Tokyo) <nagara.keita()gmail.com>
 
 Class for landmark in 3D space
 """
@@ -95,7 +95,7 @@ class Landmark:
 		h1 = - (focus * hx / hz)
 		h2 = focus * hy / hz
 		
-		# differential
+		# derivative
 		R11 = R[0][0]
 		R12 = R[0][1]
 		R13 = R[0][2]
