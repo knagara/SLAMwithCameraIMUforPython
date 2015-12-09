@@ -47,6 +47,47 @@ class Landmark:
 		return theta, phi
 		
 		
+	def h(self, position, o, focus):
+		
+		# often used variables
+		# xi, yi, zi, xt, yt, zt, p (Inverse depth)
+		xi = self.mu[0]
+		yi = self.mu[1]
+		zi = self.mu[2]
+		xt = position[0]
+		yt = position[1]
+		zt = position[2]
+		p = self.mu[5]
+		# sin, cos
+		sinTheta = sin(self.mu[3])
+		cosTheta = cos(self.mu[3])
+		sinPhi = sin(self.mu[4])
+		cosPhi = cos(self.mu[4])
+		
+		# Rotation matrix (Global coordinates -> Local coordinates)
+		rotXinv = Util.rotationMatrixX(-o[0])
+		rotYinv = Util.rotationMatrixY(-o[1])
+		rotZinv = Util.rotationMatrixZ(-o[2])
+		R = np.dot(rotXinv, np.dot(rotYinv, rotZinv))
+		
+		# hG = [hx, hy, hz].T in the global coordinates
+		hG = np.array([p * (xi - xt) + cosPhi * sinTheta,
+					p * (yi - yt) - sinPhi,
+					p * (zi - zt) + cosPhi * cosTheta])
+		
+		# hL = h Local = [hx, hy, hz].T in the local coordinates
+		hL = np.dot(R, hG)
+		hx = hL[0]
+		hy = hL[1]
+		hz = hL[2]
+		
+		# h1 = - f*hx/hz, h2 = - f*hy/hz , and Device coordinates -> Camera coordinates
+		h1 = - (focus * hx / hz)
+		h2 = focus * hy / hz
+		
+		return np.array([h1,h2])
+
+
 	def calcObservation(self, X, focus):
 		"""
 		Calc h and H (Jacobian matrix of h)
@@ -147,9 +188,11 @@ class Landmark:
 		dh2Phi = f_hz2 * (dhyPhi * hz - hy * dhzPhi)
 		dh2p = f_hz2 * (dhyp * hz - hy * dhzp)
 		
-		H = np.array([[dh1xi, dh1yi, dh1zi, dh1Theta, dh1Phi, dh1p],
+		Hm = np.array([[dh1xi, dh1yi, dh1zi, dh1Theta, dh1Phi, dh1p],
 					[dh2xi, dh2yi, dh2zi, dh2Theta, dh2Phi, dh2p]])
 		
-		return np.array([h1,h2]), H
+		Hx = np.array([[-dh1xi, -dh1yi, -dh1zi],
+					[-dh2xi, -dh2yi, -dh2zi]])
 		
+		return np.array([h1,h2]), Hx, Hm	
 		

@@ -23,12 +23,13 @@ class StateRBPF:
 
 	def __init__(self):
 		# ----- Set parameters here! ----- #
-		self.M = 100 # total number of particles パーティクルの数
+		self.M = 256 # total number of particles パーティクルの数
 		self.f = 1575.54144 # focus length of camera [px] カメラの焦点距離 [px]
 		# Particle Filter
 		self.noise_a_sys = 0.01 # system noise of acceleration　加速度のシステムノイズ
 		self.noise_g_sys = 0.01 # system noise of gyro　ジャイロのシステムノイズ
-		self.noise_camera = 100.0 # observation noise of camera カメラの観測ノイズ
+		self.noise_p_sys_camera = 0.0001 # system noise of position　位置のシステムノイズ(カメラ観測時)
+		self.noise_camera = 25.0 # observation noise of camera カメラの観測ノイズ
 		# ----- Set parameters here! ----- #
 
 		self.init()
@@ -47,7 +48,7 @@ class StateRBPF:
 	def initParticleFilter(self):
 		self.pf = ParticleFilter().getParticleFilterClass("RBPF")
 		self.pf.setFocus(self.f)
-		self.pf.setParameter(self.noise_a_sys, self.noise_g_sys, self.noise_camera) #パーティクルフィルタのパラメータ（ノイズ） parameters (noise)
+		self.pf.setParameter(self.noise_a_sys, self.noise_g_sys, self.noise_p_sys_camera, self.noise_camera) #パーティクルフィルタのパラメータ（ノイズ） parameters (noise)
 		self.X = [] # パーティクルセット set of particles
 		self.loglikelihood = 0.0
 		self.count = 1
@@ -133,7 +134,8 @@ class StateRBPF:
 		P = self.createPositionCovarianceMatrixFromParticle(self.X)
 		
 		# exec particle filter
-		self.X = self.pf.pf_step_camera(self.X, self.dt, keypoints, self.step, P, self.M)
+		self.X = self.pf.pf_step_camera(self.X, 0.1, keypoints, self.step, P, self.M)################
+		#self.X = self.pf.pf_step_camera(self.X, self.dt, keypoints, self.step, P, self.M)
 
 		# Count
 		self.count+=1

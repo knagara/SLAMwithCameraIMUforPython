@@ -26,7 +26,7 @@ import paho.mqtt.client as mqtt
 from sensor import Sensor
 from state import State
 from image import Image
-from landmarkObservation import LandmarkObservation
+#from landmarkObservation import LandmarkObservation
 
 
 # Main method
@@ -57,10 +57,10 @@ def main():
 	image = Image().getImageClass(model)
 	image.setState(state)
 	
-	print("Loading theano ... please wait")
-	observation = LandmarkObservation()
-	if(model == "RBPF"):
-		state.setObservationModel(observation)
+	#print("Loading theano ... please wait")
+	#observation = LandmarkObservation()
+	#if(model == "RBPF"):
+	#	state.setObservationModel(observation)
 
 	#Get estimated state vector from state class and publish to the server (MQTT broker).
 	def publish_state():

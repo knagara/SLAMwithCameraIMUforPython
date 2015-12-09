@@ -3,6 +3,240 @@
 
 
 
+
+
+
+	def predictionAndUpdateOneParticle(self, X, dt, dt2, keypoints, step, P):
+		
+		weight = 0.0	
+		weights = []
+		count_of_known_keypoints = 0
+		x_diff_sum = np.array([0.0, 0.0, 0.0])
+		x_diffs = []
+		
+		# 姿勢予測 prediction of position
+		X_ = Particle()
+		X_.landmarks = X.landmarks
+		X_.x = X.x + dt*X.v + dt2*X.a
+		X_.v = X.v + dt*X.a
+		X_.a = X.a
+		X_.o = X.o
+		
+		for keypoint in keypoints:
+			#############################
+			start_time_ = time.clock() 
+			#############################
+			# previous landmark id
+			prevLandmarkId = (step-1)*10000 + keypoint.prevIndex
+			# new landmark id
+			landmarkId = step*10000 + keypoint.index
+			# The landmark is already observed or not?
+			if(X.landmarks.has_key(prevLandmarkId) == False):
+				# Fisrt observation
+				# Initialize landmark and append to particle
+				landmark = Landmark()
+				landmark.init(X, keypoint, P, self.focus)
+				X.landmarks[landmarkId] = landmark
+			else:
+				# Already observed
+				count_of_known_keypoints += 1
+				X.landmarks[landmarkId] = X.landmarks[prevLandmarkId]
+				del X.landmarks[prevLandmarkId]
+				
+				# Actual observation z				
+				z = np.array([keypoint.x, keypoint.y])
+				
+				# 計測予測 prediction of observation
+				#  Calc h(x), Hx, Hm (Jacobian matrix of h with respect to X and Landmark)
+				z__, Hx, Hm = X.landmarks[landmarkId].calcObservation(X_, self.focus)
+				
+				# 姿勢のカルマンフィルタ Kalman filter of position
+				S = Hm.dot(X.landmarks[landmarkId].sigma.dot(Hm.T)) + self.R
+				L = S + Hx.dot(self.Q.dot(Hx.T))
+				Sinv = np.linalg.inv(S)
+				Linv = np.linalg.inv(L)
+				sigmax = np.linalg.inv( Hx.T.dot(Sinv.dot(Hx)) + np.linalg.inv(self.Q) )
+				mux = sigmax.dot(Hx.T.dot(Sinv.dot(z - z__)))
+				
+				# 姿勢のサンプリング sampling of position
+				x_diff = np.random.multivariate_normal(mux, sigmax)
+				x_diffs.append(x_diff)
+				x_diff_sum += x_diff
+				
+				# 計測再予測 reprediction of observation
+				z_ = X.landmarks[landmarkId].h(X_.x + x_diff, X.o, self.focus)
+				
+				# ランドマークの予測 prediction of landmark
+				K = X.landmarks[landmarkId].sigma.dot(Hm.T.dot(Sinv))
+				X.landmarks[landmarkId].mu += K.dot(z - z_)
+				X.landmarks[landmarkId].sigma = X.landmarks[landmarkId].sigma - K.dot(Hm.dot(X.landmarks[landmarkId].sigma))
+				
+				# 重み計算 calc weight
+				w = (1.0 / (math.sqrt( np.linalg.det(2.0 * math.pi * L) ))) * np.exp( -0.5 * ( (z-z_).T.dot(Linv.dot(z-z_)) ) )
+				weights.append(w)
+				
+				###############################
+				end_time_ = time.clock()
+				if(self.count == 0):
+					#print(x_diff)
+					#print ""+str(landmarkId)+" update time = %f" %(end_time_-start_time_)
+					pass
+				###############################
+					
+		if(count_of_known_keypoints > 0):
+			x_diff = x_diff_sum/float(count_of_known_keypoints)
+			X_.x += x_diff
+			X_.v += (2.0*x_diff)/dt
+			
+			weight /= float(count_of_known_keypoints)
+			weight *= 1000
+		
+		###############################
+		print("weight "+str(weight))
+		#if(self.count == 0):
+			#print("weight "+str(weight))
+		###########################
+		self.count+=1
+		###########################
+		
+		return X_, weight
+
+
+
+
+
+
+
+				###############################
+				end_time_ = time.clock()
+				if(self.count == 0):
+					print("z "),
+					print(z)
+					print("z_ "),
+					print(z_)
+					print("z__ "),
+					print(z__)
+					#print ""+str(landmarkId)+" update time = %f" %(end_time_-start_time_)
+					pass
+				###############################
+
+
+
+
+
+
+		
+		
+	def calcObservation(self, X, focus):
+		"""
+		Calc h and H (Jacobian matrix of h)
+		
+		Observation function
+			z = h(x) + v
+			
+			h(x) = [h1(x), h2(x)].T
+			h1(x) = f*hx/hz - cx
+			h2(x) = f*hy/hz - cy
+		"""
+		
+		# often used variables
+		# xi, yi, zi, xt, yt, zt, p (Inverse depth)
+		xi = self.mu[0]
+		yi = self.mu[1]
+		zi = self.mu[2]
+		xt = X.x[0]
+		yt = X.x[1]
+		zt = X.x[2]
+		p = self.mu[5]
+		# sin, cos
+		sinTheta = sin(self.mu[3])
+		cosTheta = cos(self.mu[3])
+		sinPhi = sin(self.mu[4])
+		cosPhi = cos(self.mu[4])
+		
+		# Rotation matrix (Global coordinates -> Local coordinates)
+		rotXinv = Util.rotationMatrixX(-X.o[0])
+		rotYinv = Util.rotationMatrixY(-X.o[1])
+		rotZinv = Util.rotationMatrixZ(-X.o[2])
+		R = np.dot(rotXinv, np.dot(rotYinv, rotZinv))
+		
+		# hG = [hx, hy, hz].T in the global coordinates
+		hG = np.array([p * (xi - xt) + cosPhi * sinTheta,
+					p * (yi - yt) - sinPhi,
+					p * (zi - zt) + cosPhi * cosTheta])
+		
+		# hL = h Local = [hx, hy, hz].T in the local coordinates
+		hL = np.dot(R, hG)
+		hx = hL[0]
+		hy = hL[1]
+		hz = hL[2]
+		
+		# h1 = - f*hx/hz, h2 = - f*hy/hz , and Device coordinates -> Camera coordinates
+		h1 = - (focus * hx / hz)
+		h2 = focus * hy / hz
+		
+		# derivative
+		R11 = R[0][0]
+		R12 = R[0][1]
+		R13 = R[0][2]
+		R21 = R[1][0]
+		R22 = R[1][1]
+		R23 = R[1][2]
+		R31 = R[2][0]
+		R32 = R[2][1]
+		R33 = R[2][2]
+		
+		dhxxi = p * R11
+		dhyxi = p * R21
+		dhzxi = p * R31
+		
+		dhxyi = p * R12
+		dhyyi = p * R22
+		dhzyi = p * R32
+		
+		dhxzi = p * R13
+		dhyzi = p * R23
+		dhzzi = p * R33
+		
+		dhxTheta = R11 * cosPhi * cosTheta - R13 * cosPhi * sinTheta
+		dhyTheta = R21 * cosPhi * cosTheta - R23 * cosPhi * sinTheta
+		dhzTheta = R31 * cosPhi * cosTheta - R33 * cosPhi * sinTheta
+		
+		dhxPhi = - R11 * sinTheta * sinPhi - R12 * cosPhi - R13 * cosTheta * sinPhi
+		dhyPhi = - R21 * sinTheta * sinPhi - R22 * cosPhi - R23 * cosTheta * sinPhi
+		dhzPhi = - R31 * sinTheta * sinPhi - R32 * cosPhi - R33 * cosTheta * sinPhi
+		
+		dhxp = R11 * (xi - xt) + R12 * (yi - yt) + R13 * (zi - zt)
+		dhyp = R21 * (xi - xt) + R22 * (yi - yt) + R23 * (zi - zt)
+		dhzp = R31 * (xi - xt) + R32 * (yi - yt) + R33 * (zi - zt)
+		
+		# Jacobian
+		f_hz2 = focus / (hz * hz) # focus / (hz)^2
+		
+		dh1xi = - f_hz2 * (dhxxi * hz - hx * dhzxi)
+		dh1yi = - f_hz2 * (dhxyi * hz - hx * dhzyi)
+		dh1zi = - f_hz2 * (dhxzi * hz - hx * dhzzi)
+		dh1Theta = - f_hz2 * (dhxTheta * hz - hx * dhzTheta)
+		dh1Phi = - f_hz2 * (dhxPhi * hz - hx * dhzPhi)
+		dh1p = - f_hz2 * (dhxp * hz - hx * dhzp)
+		
+		dh2xi = f_hz2 * (dhyxi * hz - hy * dhzxi)
+		dh2yi = f_hz2 * (dhyyi * hz - hy * dhzyi)
+		dh2zi = f_hz2 * (dhyzi * hz - hy * dhzzi)
+		dh2Theta = f_hz2 * (dhyTheta * hz - hy * dhzTheta)
+		dh2Phi = f_hz2 * (dhyPhi * hz - hy * dhzPhi)
+		dh2p = f_hz2 * (dhyp * hz - hy * dhzp)
+		
+		H = np.array([[dh1xi, dh1yi, dh1zi, dh1Theta, dh1Phi, dh1p],
+					[dh2xi, dh2yi, dh2zi, dh2Theta, dh2Phi, dh2p]])
+		
+		return np.array([h1,h2]), H
+
+
+
+
+
+
 	def pf_step_camera(self, X, dt, keypoints, step, P, M):
 		""" One Step of Sampling Importance Resampling for Particle Filter
 			for IMU sensor
