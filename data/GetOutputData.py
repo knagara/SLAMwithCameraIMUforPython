@@ -8,6 +8,7 @@ Subscribe output and save them as CSV file.
 import sys
 import numpy as np
 import paho.mqtt.client as mqtt
+import datetime
 
 def init():
 	global isFirst, time, isFirstV, timeV, isFirstAll, timeAll
@@ -104,10 +105,12 @@ def on_message(client, userdata, msg):
 	elif(str(msg.topic) == "SLAM/output/all"):
 		appendDataAll(data)
 	elif(str(msg.topic) == "SLAM/output/stop"):
-		np.savetxt('./output/accel.csv', accel, delimiter=',')
-		np.savetxt('./output/velocity.csv', velocity, delimiter=',')
-		np.savetxt('./output/position.csv', position, delimiter=',')
-		np.savetxt('./output/orientation.csv', orientation, delimiter=',')
+		date = datetime.datetime.now()
+		datestr = date.strftime("%Y%m%d_%H%M%S_")
+		np.savetxt('./output/'+datestr+'accel.csv', accel, delimiter=',')
+		np.savetxt('./output/'+datestr+'velocity.csv', velocity, delimiter=',')
+		np.savetxt('./output/'+datestr+'position.csv', position, delimiter=',')
+		np.savetxt('./output/'+datestr+'orientation.csv', orientation, delimiter=',')
 		print("[GetOutputData] stop")
 		init()
 

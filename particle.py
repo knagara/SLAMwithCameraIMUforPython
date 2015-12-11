@@ -45,7 +45,11 @@ class Particle:
 		
 
 	def appendLandmark(self, key, landmark):
-		self.landmarks[key] = landmark		
+		self.landmarks[key] = landmark	
+		
+	
+	def printXYZ(self):
+		print(str(self.x[0])+","+str(self.x[1])+","+str(self.x[2]))
 		
 		
 		

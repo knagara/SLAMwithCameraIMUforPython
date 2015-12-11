@@ -24,10 +24,12 @@ class ParticleFilterRBPF:
 	def setParameter(self, param1, param2, param3, param4):
 		self.noise_a_sys = param1 # system noise of acceleration　加速度のシステムノイズ
 		self.noise_g_sys = param2 # system noise of gyro　ジャイロのシステムノイズ
-		self.noise_p_sys_camera = param3 # system noise of position　位置のシステムノイズ(カメラ観測時)
+		self.noise_p_sys_camera = param3 # system noise of acceleration (at camera step) 加速度のシステムノイズ(カメラ観測時)
 		self.noise_camera = param4 # observation noise of camera カメラの観測ノイズ
 		
-		self.Q = np.diag([self.noise_p_sys_camera, self.noise_p_sys_camera, self.noise_p_sys_camera])
+		self.dt_camera = 0.1 # time delta at camera step カメラ観測時の Δt
+		
+		self.Q = 0.5 * self.dt_camera * self.dt_camera * np.diag([self.noise_p_sys_camera, self.noise_p_sys_camera, self.noise_p_sys_camera])
 						
 		self.R = np.diag([self.noise_camera, self.noise_camera])
 
@@ -142,7 +144,8 @@ class ParticleFilterRBPF:
 	
 	def predictionAndUpdateOneParticle(self, X, dt, dt2, keypoints, step, P):
 		
-		weight = 0.0	
+		RSS = [] # residual sum of squares
+		weight = 0.0 # weight (return value)
 		weights = []
 		count_of_known_keypoints = 0
 		x_diff_sum = np.array([0.0, 0.0, 0.0])
@@ -185,7 +188,11 @@ class ParticleFilterRBPF:
 				z__, Hx, Hm = X.landmarks[landmarkId].calcObservation(X_, self.focus)
 				
 				# 姿勢のカルマンフィルタ Kalman filter of position
-				S = Hm.dot(X.landmarks[landmarkId].sigma.dot(Hm.T)) + self.R
+				"""
+				mu_ = copy.deepcopy(X.landmarks[landmarkId].mu)
+				sigma_ = copy.deepcopy(X.landmarks[landmarkId].sigma)
+				
+				S = Hm.dot(sigma_.dot(Hm.T)) + self.R
 				L = S + Hx.dot(self.Q.dot(Hx.T))
 				Sinv = np.linalg.inv(S)
 				Linv = np.linalg.inv(L)
@@ -204,14 +211,39 @@ class ParticleFilterRBPF:
 				K = X.landmarks[landmarkId].sigma.dot(Hm.T.dot(Sinv))
 				X.landmarks[landmarkId].mu += K.dot(z - z_)
 				X.landmarks[landmarkId].sigma = X.landmarks[landmarkId].sigma - K.dot(Hm.dot(X.landmarks[landmarkId].sigma))
+				"""
+				
+				S = Hm.dot(X.landmarks[landmarkId].sigma.dot(Hm.T)) + self.R
+				L = S + Hx.dot(self.Q.dot(Hx.T))
+				Sinv = np.linalg.inv(S)
+				Linv = np.linalg.inv(L)
+				sigmax = np.linalg.inv( Hx.T.dot(Sinv.dot(Hx)) + np.linalg.inv(self.Q) )
+				mux = sigmax.dot(Hx.T.dot(Sinv.dot(z - z__)))
+				
+				# 姿勢のサンプリング sampling of position
+				x_diff = np.random.multivariate_normal(mux, sigmax)
+				x_diffs.append(x_diff)
+				x_diff_sum += x_diff
+				
+				# 計測再予測 reprediction of observation
+				z_, XYZ = X.landmarks[landmarkId].h(X_.x + x_diff, X.o, self.focus)
+				
+				# ランドマークの予測 prediction of landmark
+				K = X.landmarks[landmarkId].sigma.dot(Hm.T.dot(Sinv))
+				X.landmarks[landmarkId].mu += K.dot(z - z_)
+				X.landmarks[landmarkId].sigma = X.landmarks[landmarkId].sigma - K.dot(Hm.dot(X.landmarks[landmarkId].sigma))
+				
 				
 				# 重み計算 calc weight
-				w = (1.0 / (math.sqrt( np.linalg.det(2.0 * math.pi * L) ))) * np.exp( -0.5 * ( (z-z_).T.dot(Linv.dot(z-z_)) ) )
+				rss_ = (z-z_).T.dot(Linv.dot(z-z_))
+				RSS.append(rss_)
+				w = (1.0 / (math.sqrt( np.linalg.det(2.0 * math.pi * L) ))) * np.exp( -0.5 * ( rss_ ) )
 				weights.append(w)
 				
 				###############################
 				end_time_ = time.clock()
 				if(self.count == 0):
+					#print(XYZ)
 					#print(x_diff)
 					#print ""+str(landmarkId)+" update time = %f" %(end_time_-start_time_)
 					pass
@@ -219,12 +251,12 @@ class ParticleFilterRBPF:
 					
 
 		if(count_of_known_keypoints > 0):
-			# 重みが最大のものだけを使用する
-			max_index = weights.index(max(weights))
+			# 残差が最小のときの重みと位置を採用する
+			max_index = RSS.index(min(RSS))
 			weight = weights[max_index]
 			weight *= 1000
 			X_.x += x_diffs[max_index]
-			X_.v += (2.0*x_diffs[max_index])/dt
+			X_.v += (2.0*x_diffs[max_index])/self.dt_camera
 		
 		###############################
 		#print("weight "+str(weight))
@@ -280,7 +312,7 @@ class ParticleFilterRBPF:
 		weight_sum = sum(weight) # 総和 the sum of weights
 		if(weight_sum > 0.000001):
 			# 重みの総和が大きい（尤度が高い）場合 likelihood is high enough
-			print("weight_sum "+str(weight_sum))     #########################
+			#print("weight_sum "+str(weight_sum))     #########################
 			# 正規化 normalization of weight
 			weight = [(w/weight_sum) for w in weight]
 			#for i in xrange(M):
@@ -289,9 +321,9 @@ class ParticleFilterRBPF:
 			X_resampled = self.resampling(X_predicted, weight, M)
 		else:
 			# 重みの総和が小さい（尤度が低い）場合 likelihood is low
-			print("weight_sum "+str(weight_sum)),    #########################
+			#print("weight_sum "+str(weight_sum)),    #########################
 			
-			print("***")          #########################
+			#print("***")          #########################
 			# リサンプリングを行わない No re-sampling
 			X_resampled = X_predicted
 			
@@ -327,7 +359,7 @@ class ParticleFilterRBPF:
 		X_predicted, weight = self.predictionAndUpdate(X, dt, keypoints, step, P, M)
 		###############################
 		end_time_ = time.clock()
-		print "update   time = %f" %(end_time_-start_time_) 
+		#print "update   time = %f" %(end_time_-start_time_) 
 		###############################
 		
 		# 正規化とリサンプリング normalization and resampling

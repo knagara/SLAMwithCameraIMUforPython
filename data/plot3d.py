@@ -6,7 +6,7 @@ from scipy import genfromtxt
 
 
 # ファイル読み込み
-d = genfromtxt("./plot3d/particles_before.csv", delimiter=",")
+d = genfromtxt("./plot3d/20151211_173406_xyz_b.csv", delimiter=",")
 
 # グラフ作成
 fig = pyplot.figure()

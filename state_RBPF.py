@@ -14,6 +14,7 @@ This class is generated from "state.py".
 import sys
 import math
 import time
+import datetime
 import cv2 as cv
 import numpy as np
 from particle_filter import ParticleFilter
@@ -28,7 +29,7 @@ class StateRBPF:
 		# Particle Filter
 		self.noise_a_sys = 0.01 # system noise of acceleration　加速度のシステムノイズ
 		self.noise_g_sys = 0.01 # system noise of gyro　ジャイロのシステムノイズ
-		self.noise_p_sys_camera = 0.0001 # system noise of position　位置のシステムノイズ(カメラ観測時)
+		self.noise_p_sys_camera = 0.1 # system noise of acceleration (at camera step) 加速度のシステムノイズ(カメラ観測時)
 		self.noise_camera = 25.0 # observation noise of camera カメラの観測ノイズ
 		# ----- Set parameters here! ----- #
 
@@ -133,9 +134,10 @@ class StateRBPF:
 		# covariance matrix of position
 		P = self.createPositionCovarianceMatrixFromParticle(self.X)
 		
+		self.saveXYZasCSV(self.X,"b")
 		# exec particle filter
-		self.X = self.pf.pf_step_camera(self.X, 0.1, keypoints, self.step, P, self.M)################
-		#self.X = self.pf.pf_step_camera(self.X, self.dt, keypoints, self.step, P, self.M)
+		self.X = self.pf.pf_step_camera(self.X, self.dt, keypoints, self.step, P, self.M)
+		self.saveXYZasCSV(self.X,"a")
 
 		# Count
 		self.count+=1
@@ -145,7 +147,29 @@ class StateRBPF:
 		
 		# Unlock IMU process
 		self.lock = False
-
+		
+		
+		
+	"""
+	print (X,Y,Z) of particles
+	"""
+	def printXYZ(self,X):
+		print("-----")
+		for x in X:
+			x.printXYZ()
+		
+		
+		
+	"""
+	save (X,Y,Z) of particles as CSV file
+	"""
+	def saveXYZasCSV(self,X,appendix):
+		x = []
+		for X_ in X:
+			x.append(X_.x)
+		date = datetime.datetime.now()
+		datestr = date.strftime("%Y%m%d_%H%M%S_")
+		np.savetxt('./data/plot3d/'+datestr+'xyz_'+appendix+'.csv', x, delimiter=',')
 
 
 	"""

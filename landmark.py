@@ -74,6 +74,11 @@ class Landmark:
 		hG = np.array([p * (xi - xt) + cosPhi * sinTheta,
 					p * (yi - yt) - sinPhi,
 					p * (zi - zt) + cosPhi * cosTheta])
+					
+		# XYZ = landmark position in XYZ
+		XYZ = np.array([xi + (cosPhi * sinTheta)/p,
+					yi - sinPhi/p,
+					zi + (cosPhi * cosTheta)/p])
 		
 		# hL = h Local = [hx, hy, hz].T in the local coordinates
 		hL = np.dot(R, hG)
@@ -85,7 +90,7 @@ class Landmark:
 		h1 = - (focus * hx / hz)
 		h2 = focus * hy / hz
 		
-		return np.array([h1,h2])
+		return np.array([h1,h2]), XYZ
 
 
 	def calcObservation(self, X, focus):
