@@ -25,6 +25,8 @@ class ParticleFilterCoplanarity:
 		self.noise_g_obs = param4 # observation noise of gyro　ジャイロの観測ノイズ
 		self.noise_coplanarity_obs = param5 # observation noise of coplanarity 共面条件の観測ノイズ
 	
+		self.dt_camera = 0.1 # time delta at camera step カメラ観測時の Δt
+		self.dt2_camera = 0.5 * self.dt_camera * self.dt_camera # time delta at camera step カメラ観測時の 1/2*Δt^2
 
 	def f(self, dt, X):
 		""" Transition model
@@ -49,8 +51,8 @@ class ParticleFilterCoplanarity:
 		w_cov_a = numpy.eye(3) * self.noise_a_sys # covariance matrix of noise (accel)
 		w_a = numpy.random.multivariate_normal(w_mean, w_cov_a) # generate random
 		
-		X_new.x = X.x + dt*X.v + dt2*X.a + dt2*w_a
-		X_new.v = X.v + dt*X.a + dt*w_a
+		X_new.x = X.x + dt*X.v + dt2*X.a + self.dt2_camera*w_a
+		X_new.v = X.v + dt*X.a + self.dt_camera*w_a
 		X_new.a = X.a
 		X_new.o = X.o
 		
@@ -150,7 +152,7 @@ class ParticleFilterCoplanarity:
 			while U > c:
 				i += 1
 				c += W[i]
-			X_resampled.append(X[i])
+			X_resampled.append(copy.deepcopy(X[i]))
 		return X_resampled
 					
 
@@ -182,7 +184,7 @@ class ParticleFilterCoplanarity:
 		weight_sum = sum(weight) # 総和 the sum of weights
 		if(weight_sum > 0.5):
 			# 重みの総和が大きい（尤度が高い）場合 likelihood is high enough
-			print(weight_sum)
+			######print(weight_sum)
 			# 正規化 normalization of weight
 			for i in range(M):
 				weight[i] /= weight_sum
@@ -190,8 +192,8 @@ class ParticleFilterCoplanarity:
 			X_resampled = self.resampling(X_predicted, weight, M)
 		else:
 			# 重みの総和が小さい（尤度が低い）場合 likelihood is low
-			print(weight_sum),
-			print("***")
+			######print(weight_sum),
+			######print("***")
 			# リサンプリングを行わない No re-sampling
 			X_resampled = copy.deepcopy(X_predicted)
 

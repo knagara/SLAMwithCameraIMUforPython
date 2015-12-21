@@ -54,8 +54,10 @@ def main():
 
 	state = State().getStateClass(model)
 	sensor = Sensor(state)
-	image = Image().getImageClass(model)
-	image.setState(state)
+	
+	if(model == "Coplanarity" or model == "RBPF"):
+		image = Image().getImageClass(model)
+		image.setState(state)
 	
 	#print("Loading theano ... please wait")
 	#observation = LandmarkObservation()
@@ -95,15 +97,14 @@ def main():
 
 		#Process data in senser.py or image.py
 		if(str(msg.topic) == "SLAM/input/camera"): #image.py
-			if(model == "IMUKF" or model == "IMUPF" or model == "IMUPF2"):
-				return
-			#print("+"),
-			data_ = str(msg.payload).split('$') # time$data&data&...
-			time = data_[0]
-			data = data_[1].split('&') # data&data&...
-			image.processData(time,data) #Process data
-			publish_state()
-			#print "|",
+			if(model == "Coplanarity" or model == "RBPF"):
+				#print("+"),
+				data_ = str(msg.payload).split('$') # time$data&data&...
+				time = data_[0]
+				data = data_[1].split('&') # data&data&...
+				image.processData(time,data) #Process data
+				publish_state()
+				#print "|",
 
 		elif(str(msg.topic) == "SLAM/input/all"): #sensor.py
 			#print "*",

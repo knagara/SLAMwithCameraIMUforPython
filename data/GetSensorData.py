@@ -8,6 +8,7 @@ Subscribe sensor data and save them as CSV file.
 import sys
 import numpy as np
 import paho.mqtt.client as mqtt
+import datetime
 
 
 def init():
@@ -67,7 +68,9 @@ def on_message(client, userdata, msg):
 	if(str(msg.topic) == "SLAM/input/all"):
 		appendData(data)
 	elif(str(msg.topic) == "SLAM/input/stop"):
-		np.savetxt('./input/data.csv', accel, delimiter=',')
+		date = datetime.datetime.now()
+		datestr = date.strftime("%Y%m%d_%H%M%S_")
+		np.savetxt('./input/'+datestr+'data.csv', accel, delimiter=',')
 		print("[GetSensorData] stop")
 		init()
 

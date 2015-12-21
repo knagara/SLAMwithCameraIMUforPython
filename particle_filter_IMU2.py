@@ -11,6 +11,7 @@ IMUPF2 -> IMU data is regarded as control
 import numpy
 import copy
 import math
+import Util
 
 class ParticleFilterIMU2:
 
@@ -40,10 +41,12 @@ class ParticleFilterIMU2:
 		dt3 = dt*dt*dt
 		
 		X_new = copy.deepcopy(X)
-		X_new.x = X.x + dt*X.v + 0.5*dt2*X.a + 0.166666*dt3*w_a
-		X_new.v = X.v + dt*X.a + 0.5*dt2*w_a
-		X_new.a = accel + dt*w_a
-		X_new.o = ori + dt*w_o
+			
+		X_new.x = X.x + dt*X.v + 0.5*dt2*X.a + 0.5*dt2*w_a
+		X_new.v = X.v + dt*X.a + dt*w_a
+		X_new.a = accel
+		X_new.o = ori
+			
 	
 		return X_new
 					

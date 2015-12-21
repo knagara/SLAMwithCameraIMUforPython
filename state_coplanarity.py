@@ -22,6 +22,7 @@ from mpl_toolkits.mplot3d.axes3d import Axes3D
 import KF
 from particle_filter import ParticleFilter
 from particle import Particle
+import Util
 
 class StateCoplanarity:
 
@@ -36,11 +37,11 @@ class StateCoplanarity:
 		self.noise_a_obs = 0.00000001 # observation noise of acceleration　加速度の観測ノイズ
 		self.noise_g_obs = 0.00000001 # observation noise of gyro　ジャイロの観測ノイズ
 		# Particle Filter
-		self.PFnoise_a_sys = 5.0 # system noise of acceleration　加速度のシステムノイズ
-		self.PFnoise_g_sys = 5.0 # system noise of gyro　ジャイロのシステムノイズ
+		self.PFnoise_a_sys = 10.0 # system noise of acceleration　加速度のシステムノイズ
+		self.PFnoise_g_sys = 10.0 # system noise of gyro　ジャイロのシステムノイズ
 		self.PFnoise_a_obs = 0.00000001 # observation noise of acceleration　加速度の観測ノイズ
 		self.PFnoise_g_obs = 0.00000001 # observation noise of gyro　ジャイロの観測ノイズ
-		self.PFnoise_coplanarity_obs = 0.1 # observation noise of coplanarity 共面条件の観測ノイズ
+		self.PFnoise_coplanarity_obs = 1.0 # observation noise of coplanarity 共面条件の観測ノイズ
 		# ----- Set parameters here! ----- #
 		
 		self.init()
@@ -53,6 +54,10 @@ class StateCoplanarity:
 		
 		self.t = 0.0
 		self.t1 = 0.0
+		
+		self.accel1 = np.array([0.0, 0.0, 0.0])
+		self.accel2 = np.array([0.0, 0.0, 0.0])
+		self.accel3 = np.array([0.0, 0.0, 0.0])
 		
 		self.initKalmanFilter()
 		self.initParticleFilter()
@@ -129,6 +134,17 @@ class StateCoplanarity:
 						[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0]])
 			Qt = np.diag([dt2,dt2,dt2,self.dt,self.dt,self.dt,1.0,1.0,1.0,self.dt,self.dt,self.dt])
 			Q = Qt.dot(self.Q)
+			
+			self.accel3 = copy.deepcopy(self.accel2)
+			self.accel2 = copy.deepcopy(self.accel1)
+			self.accel1 = copy.deepcopy(accel)
+			if(Util.isDeviceMoving(self.accel1[0]) == False and Util.isDeviceMoving(self.accel2[0]) == False and Util.isDeviceMoving(self.accel3[0]) == False):
+				self.mu[3] = 0.0
+			if(Util.isDeviceMoving(self.accel1[1]) == False and Util.isDeviceMoving(self.accel2[1]) == False and Util.isDeviceMoving(self.accel3[1]) == False):
+				self.mu[4] = 0.0
+			if(Util.isDeviceMoving(self.accel1[2]) == False and Util.isDeviceMoving(self.accel2[2]) == False and Util.isDeviceMoving(self.accel3[2]) == False):
+				self.mu[5] = 0.0
+				
 			self.mu, self.sigma = KF.execKF1Simple(Y,self.mu,self.sigma,A,self.C,Q,self.R)
 			
 		if(self.isFirstTimeIMU):
@@ -160,9 +176,9 @@ class StateCoplanarity:
 		self.lock = True
 		
 		# Get current time
-		#self.t1 = self.t
-		#self.t = time_
-		#self.dt = self.t - self.t1
+		self.t1 = self.t
+		self.t = time_
+		self.dt = self.t - self.t1
 		
 		# create particle from state vector
 		self.X = self.createParticleFromStateVector(self.mu, self.sigma)
@@ -172,8 +188,8 @@ class StateCoplanarity:
 		X1.initWithMu(self.mu1)
 		
 		# exec particle filter
-		print(self.count),
-		self.X = self.pf.pf_step(self.X, X1, 0.02, keypointPairs, self.M)
+		##########print(self.count),
+		self.X = self.pf.pf_step(self.X, X1, self.dt, keypointPairs, self.M)
 		
 		# create state vector from particle set
 		self.mu, self.sigma = self.createStateVectorFromParticle(self.X)		

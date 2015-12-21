@@ -13,9 +13,11 @@ This class is generated from "state.py".
 
 import sys
 import math
+import copy
 import cv2 as cv
 import numpy as np
 import KF
+import Util
 
 class StateIMUKF:
 
@@ -27,6 +29,9 @@ class StateIMUKF:
 		self.isFirstTime = True
 		self.t = 0
 		self.t1 = 0
+		self.accel1 = np.array([0.0, 0.0, 0.0])
+		self.accel2 = np.array([0.0, 0.0, 0.0])
+		self.accel3 = np.array([0.0, 0.0, 0.0])
 		
 		self.initKalmanFilter()
 
@@ -81,6 +86,17 @@ class StateIMUKF:
 							[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0],
 							[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0],
 							[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0]])
+								
+			self.accel3 = copy.deepcopy(self.accel2)
+			self.accel2 = copy.deepcopy(self.accel1)
+			self.accel1 = copy.deepcopy(accel)
+			if(Util.isDeviceMoving(self.accel1[0]) == False and Util.isDeviceMoving(self.accel2[0]) == False and Util.isDeviceMoving(self.accel3[0]) == False):
+				self.mu[3] = 0.0
+			if(Util.isDeviceMoving(self.accel1[1]) == False and Util.isDeviceMoving(self.accel2[1]) == False and Util.isDeviceMoving(self.accel3[1]) == False):
+				self.mu[4] = 0.0
+			if(Util.isDeviceMoving(self.accel1[2]) == False and Util.isDeviceMoving(self.accel2[2]) == False and Util.isDeviceMoving(self.accel3[2]) == False):
+				self.mu[5] = 0.0
+			
 			self.mu, self.sigma = KF.execKF1Simple(Y,self.mu,self.sigma,self.A,self.C,self.Q,self.R)
 
 		if(self.isFirstTime):

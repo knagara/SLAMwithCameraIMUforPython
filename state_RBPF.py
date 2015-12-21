@@ -14,11 +14,13 @@ This class is generated from "state.py".
 import sys
 import math
 import time
+import copy
 import datetime
 import cv2 as cv
 import numpy as np
 from particle_filter import ParticleFilter
 from particle import Particle
+import Util
 
 class StateRBPF:
 
@@ -27,10 +29,10 @@ class StateRBPF:
 		self.M = 256 # total number of particles パーティクルの数
 		self.f = 1575.54144 # focus length of camera [px] カメラの焦点距離 [px]
 		# Particle Filter
-		self.noise_a_sys = 0.01 # system noise of acceleration　加速度のシステムノイズ
-		self.noise_g_sys = 0.01 # system noise of gyro　ジャイロのシステムノイズ
-		self.noise_p_sys_camera = 0.1 # system noise of acceleration (at camera step) 加速度のシステムノイズ(カメラ観測時)
-		self.noise_camera = 25.0 # observation noise of camera カメラの観測ノイズ
+		self.noise_a_sys = 0.05 # system noise of acceleration　加速度のシステムノイズ
+		self.noise_g_sys = 0.05 # system noise of gyro　ジャイロのシステムノイズ
+		self.noise_a_sys_camera = 1.0 # system noise of acceleration (at camera step) 加速度のシステムノイズ(カメラ観測時)
+		self.noise_camera = 0.01 # observation noise of camera カメラの観測ノイズ
 		# ----- Set parameters here! ----- #
 
 		self.init()
@@ -42,6 +44,10 @@ class StateRBPF:
 
 		self.t = 0.0
 		self.t1 = 0.0
+		
+		self.accel1 = np.array([0.0, 0.0, 0.0])
+		self.accel2 = np.array([0.0, 0.0, 0.0])
+		self.accel3 = np.array([0.0, 0.0, 0.0])
 
 		self.initParticleFilter()
 
@@ -49,7 +55,7 @@ class StateRBPF:
 	def initParticleFilter(self):
 		self.pf = ParticleFilter().getParticleFilterClass("RBPF")
 		self.pf.setFocus(self.f)
-		self.pf.setParameter(self.noise_a_sys, self.noise_g_sys, self.noise_p_sys_camera, self.noise_camera) #パーティクルフィルタのパラメータ（ノイズ） parameters (noise)
+		self.pf.setParameter(self.noise_a_sys, self.noise_g_sys, self.noise_a_sys_camera, self.noise_camera) #パーティクルフィルタのパラメータ（ノイズ） parameters (noise)
 		self.X = [] # パーティクルセット set of particles
 		self.loglikelihood = 0.0
 		self.count = 1
@@ -92,8 +98,21 @@ class StateRBPF:
 			# init particle
 			self.X = self.initParticle(accel, ori)
 		else:
+			# is Device Moving
+			self.accel3 = copy.deepcopy(self.accel2)
+			self.accel2 = copy.deepcopy(self.accel1)
+			self.accel1 = copy.deepcopy(accel)
+			
+			isMoving = [True, True, True]
+			if(Util.isDeviceMoving(self.accel1[0]) == False and Util.isDeviceMoving(self.accel2[0]) == False and Util.isDeviceMoving(self.accel3[0]) == False):
+				isMoving[0] = False
+			if(Util.isDeviceMoving(self.accel1[1]) == False and Util.isDeviceMoving(self.accel2[1]) == False and Util.isDeviceMoving(self.accel3[1]) == False):
+				isMoving[1] = False
+			if(Util.isDeviceMoving(self.accel1[2]) == False and Util.isDeviceMoving(self.accel2[2]) == False and Util.isDeviceMoving(self.accel3[2]) == False):
+				isMoving[2] = False
+					
 			# exec particle filter
-			self.X = self.pf.pf_step_IMU(self.X, self.dt, accel, ori, self.M)
+			self.X = self.pf.pf_step_IMU(self.X, self.dt, accel, ori, isMoving, self.M)
 			""" The code below is used to get loglikelihood to decide parameters.
 			self.X, likelihood = self.pf.pf_step_IMU(self.X, self.t - self.t1, accel, ori, self.M)
 			self.loglikelihood += math.log(likelihood)
@@ -134,10 +153,10 @@ class StateRBPF:
 		# covariance matrix of position
 		P = self.createPositionCovarianceMatrixFromParticle(self.X)
 		
-		self.saveXYZasCSV(self.X,"b")
+		self.saveXYZasCSV(self.X,"1")
 		# exec particle filter
 		self.X = self.pf.pf_step_camera(self.X, self.dt, keypoints, self.step, P, self.M)
-		self.saveXYZasCSV(self.X,"a")
+		self.saveXYZasCSV(self.X,"2")
 
 		# Count
 		self.count+=1

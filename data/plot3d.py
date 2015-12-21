@@ -6,7 +6,10 @@ from scipy import genfromtxt
 
 
 # ファイル読み込み
-d = genfromtxt("./plot3d/20151211_173406_xyz_b.csv", delimiter=",")
+d = genfromtxt("./plot3d/20151221_184403_xyz_1.csv", delimiter=",")
+
+# 表示範囲
+r = 0.2
 
 # グラフ作成
 fig = pyplot.figure()
@@ -18,9 +21,9 @@ ax.set_ylabel("Y-axis")
 ax.set_zlabel("Z-axis")
 
 # 表示範囲の設定
-ax.set_xlim(-0.2, 0.2)
-ax.set_ylim(-0.2, 0.2)
-ax.set_zlim(-0.2, 0.2)
+ax.set_xlim(-r, r)
+ax.set_ylim(-r, r)
+ax.set_zlim(-r, r)
 
 # 抽出条件設定
 #d1 = d[d[:,0] >= 7]

@@ -4,6 +4,12 @@ from math import *
 import cv2 as cv
 import numpy as np
 
+def isDeviceMoving(a):
+	if(abs(a) < 0.03):
+		return False
+	else:
+		return True
+
 def lowPassFilter(value,newValue,alpha):
 	value = value * alpha + newValue * (1 - alpha)
 	return value
