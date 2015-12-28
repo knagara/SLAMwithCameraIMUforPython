@@ -60,6 +60,13 @@ class ParticleFilterRBPF:
 		X_new.v = X.v + dt*X.a + dt*noise
 		X_new.a = accel
 		X_new.o = ori
+		
+		#if(isMoving[0] == False):
+		#	X_new.v[0] = 0.0
+		#if(isMoving[1] == False):
+		#	X_new.v[1] = 0.0
+		#if(isMoving[2] == False):
+		#	X_new.v[2] = 0.0
 	
 		return X_new
 	
@@ -106,7 +113,11 @@ class ParticleFilterRBPF:
 				# Kalman filter (Landmark update)
 				X_.landmarks[landmarkId].mu, X_.landmarks[landmarkId].sigma, S, Sinv = KF.execEKF1Update(z, h, X_.landmarks[landmarkId].mu, X_.landmarks[landmarkId].sigma, H, self.R)
 				# Calc weight
-				w = (1.0 / (math.sqrt( np.linalg.det(2.0 * math.pi * S) ))) * np.exp( -0.5 * ( (z-h).T.dot(Sinv.dot(z-h)) ) )
+				w = 0.0
+				try:
+					w = (1.0 / (math.sqrt( np.linalg.det(2.0 * math.pi * S) ))) * np.exp( -0.5 * ( (z-h).T.dot(Sinv.dot(z-h)) ) )
+				except:
+					print("Error on calc weight: ")
 				weights.append(w)
 				###############################
 				if(self.count == 0):

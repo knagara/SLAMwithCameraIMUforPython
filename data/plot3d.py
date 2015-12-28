@@ -6,7 +6,7 @@ from scipy import genfromtxt
 
 
 # ファイル読み込み
-d = genfromtxt("./plot3d/20151221_184403_xyz_1.csv", delimiter=",")
+d = genfromtxt("./plot3d/20151221_184924_xyz_2.csv", delimiter=",")
 
 # 表示範囲
 r = 0.2

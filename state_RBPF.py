@@ -29,10 +29,10 @@ class StateRBPF:
 		self.M = 256 # total number of particles パーティクルの数
 		self.f = 1575.54144 # focus length of camera [px] カメラの焦点距離 [px]
 		# Particle Filter
-		self.noise_a_sys = 0.05 # system noise of acceleration　加速度のシステムノイズ
-		self.noise_g_sys = 0.05 # system noise of gyro　ジャイロのシステムノイズ
-		self.noise_a_sys_camera = 1.0 # system noise of acceleration (at camera step) 加速度のシステムノイズ(カメラ観測時)
-		self.noise_camera = 0.01 # observation noise of camera カメラの観測ノイズ
+		self.noise_a_sys = 0.01 # system noise of acceleration　加速度のシステムノイズ
+		self.noise_g_sys = 0.01 # system noise of gyro　ジャイロのシステムノイズ
+		self.noise_a_sys_camera = 0.1 # system noise of acceleration (at camera step) 加速度のシステムノイズ(カメラ観測時)
+		self.noise_camera = 0.001 # observation noise of camera カメラの観測ノイズ
 		# ----- Set parameters here! ----- #
 
 		self.init()
@@ -153,10 +153,10 @@ class StateRBPF:
 		# covariance matrix of position
 		P = self.createPositionCovarianceMatrixFromParticle(self.X)
 		
-		self.saveXYZasCSV(self.X,"1")
+		#self.saveXYZasCSV(self.X,"1")
 		# exec particle filter
 		self.X = self.pf.pf_step_camera(self.X, self.dt, keypoints, self.step, P, self.M)
-		self.saveXYZasCSV(self.X,"2")
+		#self.saveXYZasCSV(self.X,"2")
 
 		# Count
 		self.count+=1

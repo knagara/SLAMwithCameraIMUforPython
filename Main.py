@@ -36,7 +36,7 @@ def main():
 	# ============================== #
 	#       Select model here!       #
 	# ============================== #
-	model = "RBPF"
+	model = "IMUKF"
 	# ===== Model options (state vector type & estimation model) ===== #
 	# - Coplanarity (IMU with Kalman Filter & Camera with Particle Filter. Observation model is coplanarity. State vector is device state only)
 	# - RBPF (FastSLAM. IMU with Particle Filter & Camera with Extended Kalman Filter. Observation model is inverse depth. State vector are device and landmark state. Estimated by Rao-Blackwellized particle filter)
@@ -105,6 +105,8 @@ def main():
 				image.processData(time,data) #Process data
 				publish_state()
 				#print "|",
+			else:
+				publish_state()
 
 		elif(str(msg.topic) == "SLAM/input/all"): #sensor.py
 			#print "*",
