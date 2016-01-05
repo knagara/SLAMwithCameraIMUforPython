@@ -17,9 +17,8 @@ class Landmark:
 	def __init__(self):
 		self.mu = np.array([0.0,0.0,0.0,0.0,0.0,0.0])
 		self.sigma = np.zeros([])
-		
-		self.cx = 19.840576 # principal point X
-		self.cy = 9.901855 # principal point Y
+		self.cx = - 6.361694 # principal point X
+		self.cy = - 22.962158 # principal point Y
 		
 	
 	def init(self, X, keypoint, P, focus):
@@ -27,16 +26,18 @@ class Landmark:
 		self.mu[1] = X.x[1] # yi (Device position Y at first observation)
 		self.mu[2] = X.x[2] # zi (Device position Z at first observation)
 		self.mu[3], self.mu[4] = self.initThetaPhi(X, keypoint, focus) # theta, phi (Azimuth & elevation of the ray at first observation)
-		self.mu[5] = 0.1 # d_inv (Inverse depth at first observation. 0.1 means depth is 10 meter.)
+		self.mu[5] = 0.2 # d_inv (Inverse depth at first observation. 0.2 means that depth is 5 meter.)
 		
 		self.sigma = np.vstack((np.hstack((P,np.zeros([3,3]))),np.zeros([3,6])))
-		self.sigma[3][3] = 0.1
-		self.sigma[4][4] = 0.1
+		self.sigma[3][3] = 0.01
+		self.sigma[4][4] = 0.01
 		self.sigma[5][5] = 0.25
 		
 	
 	def initThetaPhi(self, X, keypoint, focus):
 		uvf = np.array([keypoint.x/focus, -keypoint.y/focus, -1]) # Camera coordinates -> Device coordinates, and normalized
+		
+		# Rotation matrix (Local coordinates -> Global coordinates)
 		rotX = Util.rotationMatrixX(X.o[0])
 		rotY = Util.rotationMatrixY(X.o[1])
 		rotZ = Util.rotationMatrixZ(X.o[2])
@@ -45,6 +46,52 @@ class Landmark:
 		theta = atan2(h[0], h[2])
 		phi = atan2(-h[1], hypot(h[0],h[2]))
 		return theta, phi
+		
+	
+	def initPrev(self, X1, keypoint, P1, focus):
+		self.mu[0] = X1.x[0] # xi (Device position X at first observation)
+		self.mu[1] = X1.x[1] # yi (Device position Y at first observation)
+		self.mu[2] = X1.x[2] # zi (Device position Z at first observation)
+		self.mu[3], self.mu[4] = self.initThetaPhiPrev(X1, keypoint, focus) # theta, phi (Azimuth & elevation of the ray at first observation)
+		self.mu[5] = 0.2 # d_inv (Inverse depth at first observation. 0.2 means that depth is 5 meter.)
+		
+		self.sigma = np.vstack((np.hstack((P1,np.zeros([3,3]))),np.zeros([3,6])))
+		self.sigma[3][3] = 0.01
+		self.sigma[4][4] = 0.01
+		self.sigma[5][5] = 0.25
+		
+	
+	def initThetaPhiPrev(self, X1, keypoint, focus):
+		uvf = np.array([keypoint.x1/focus, -keypoint.y1/focus, -1]) # Camera coordinates -> Device coordinates, and normalized
+		
+		# Rotation matrix (Local coordinates -> Global coordinates)
+		rotX = Util.rotationMatrixX(X1.o[0])
+		rotY = Util.rotationMatrixY(X1.o[1])
+		rotZ = Util.rotationMatrixZ(X1.o[2])
+		# h = R(z)R(y)R(x)uvf
+		h = np.dot(rotZ,np.dot(rotY,np.dot(rotX,uvf)))
+		theta = atan2(h[0], h[2])
+		phi = atan2(-h[1], hypot(h[0],h[2]))
+		return theta, phi
+		
+		
+	def getXYZ(self):
+		# xi, yi, zi, xt, yt, zt, p (Inverse depth)
+		xi = self.mu[0]
+		yi = self.mu[1]
+		zi = self.mu[2]
+		p = self.mu[5]
+		# sin, cos
+		sinTheta = sin(self.mu[3])
+		cosTheta = cos(self.mu[3])
+		sinPhi = sin(self.mu[4])
+		cosPhi = cos(self.mu[4])
+		# XYZ = landmark position in XYZ
+		XYZ = np.array([xi + (cosPhi * sinTheta)/p,
+					yi - sinPhi/p,
+					zi + (cosPhi * cosTheta)/p])
+		return XYZ
+		
 		
 		
 	def h(self, position, o, focus):

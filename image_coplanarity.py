@@ -40,7 +40,7 @@ class ImageCoplanarity:
 
 		#if nomatch then nothing to do
 		if(data[0] == "nomatch"):
-			#print("nomatch"),
+			print("nomatch")
 			return
 
 		time = (float(long(time_) / 1000.0))

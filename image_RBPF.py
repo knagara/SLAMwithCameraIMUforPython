@@ -40,7 +40,8 @@ class ImageRBPF:
 
 		#if nomatch then nothing to do
 		if(data[0] == "nomatch"):
-			#print("nomatch"),
+			#print("nomatch")
+			self.state.setImageData(0.0,"nomatch")
 			return
 
 		time = (float(long(time_) / 1000.0))

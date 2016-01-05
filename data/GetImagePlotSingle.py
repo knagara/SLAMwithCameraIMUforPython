@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 """
-GetImageData.py
-Subscribe image data and plot on sequential image.
+GetImageDataSingle.py
+Subscribe image data and plot on single image.
 """
 
 import sys
@@ -26,7 +26,7 @@ def init():
 
 #This method is called when mqtt is connected.
 def on_connect(client, userdata, flags, rc):
-    print('[GetImagePlot] Connected with result code '+str(rc))
+    print('[GetImagePlotSingle] Connected with result code '+str(rc))
     client.subscribe("SLAM/input/camera")
     client.subscribe("SLAM/input/stop")
 
@@ -59,8 +59,10 @@ def appendData(time_,data):
 def plotImage():
 	global output, count
 
-	rows = 1920
-	cols = 1080 * (count+1)
+	rows = 1280
+	cols = 720
+	#rows = 1920
+	#cols = 1280
 	img = np.zeros((rows, cols, 3), np.uint8)
 
 	white = (255, 255, 255)
@@ -71,37 +73,31 @@ def plotImage():
 	font = cv2.FONT_HERSHEY_PLAIN
 	font_size = 0.7
 
-	for i in range(count):
-		cv2.line(img, ((i+1)*1080, 0), ((i+1)*1080, 1920), white, 1)
-
-	i = -1
 	for d in output:
 		if(d[0] == -10000):
-			i += 1
+			pass
 		elif(d[0] == -9999):
-			cv2.putText(img, "no match", (100 + i*1080,800), font, 10, yellow)
+			#cv2.putText(img, "no match", (100 + i*1080,800), font, 10, yellow)
+			pass
 		else:
-			if(i%2 == 0):
-				color = green
-			else:
-				color = blue
+			color = blue
 
-			x1 = int(d[2]) + i*1080
+			x1 = int(d[2])
 			y1 = int(d[3])
-			x2 = int(d[4]) + (i+1)*1080
+			x2 = int(d[4])
 			y2 = int(d[5])
-			cv2.line(img, (x1,y1), (x2,y2), color, 1)
-			cv2.line(img, (x1,y1), (x1,y1), yellow, 1)
-			cv2.line(img, (x2,y2), (x2,y2), yellow, 1)
-			cv2.putText(img, str(int(d[0])), (x1+2,y1), font, font_size, color)
-			cv2.putText(img, str(int(d[1])), (x2-15,y2), font, font_size, color)
+			#cv2.line(img, (x1,y1), (x2,y2), color, 1)
+			cv2.line(img, (x1,y1), (x1,y1), yellow, 10)
+			cv2.line(img, (x2,y2), (x2,y2), yellow, 10)
+			#cv2.putText(img, str(int(d[0])), (x1+2,y1), font, font_size, color)
+			#cv2.putText(img, str(int(d[1])), (x2-15,y2), font, font_size, color)
 
 	#hight = img.shape[0]
 	#width = img.shape[1]
 	#img_half = cv2.resize(img,(hight/2,width/2))
 	#cv2.imwrite('./input/plot.jpg', img_half)
 
-	cv2.imwrite('./input/plot.jpg', img)
+	cv2.imwrite('./input/plot_single.jpg', img)
 
 
 
@@ -123,7 +119,7 @@ def on_message(client, userdata, msg):
 	elif(str(msg.topic) == "SLAM/input/stop"):
 		#np.savetxt('./input/image.csv', output, delimiter=',')
 		plotImage()
-		print("[GetImagePlot] stop")
+		print("[GetImagePlotSingle] stop")
 		init()
 
 
@@ -150,7 +146,7 @@ if __name__ == '__main__':
 	password = conf[3]
 
 	#Mqtt connect
-	client = mqtt.Client(client_id="GetImagePlot", clean_session=True, protocol=mqtt.MQTTv311)
+	client = mqtt.Client(client_id="GetImagePlotSingle", clean_session=True, protocol=mqtt.MQTTv311)
 	client.on_connect = on_connect
 	client.on_message = on_message
 	client.username_pw_set(username, password=password)

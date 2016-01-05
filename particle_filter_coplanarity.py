@@ -4,31 +4,25 @@ Particle Filter
 (Coplanarity model version)
 """
 
-import numpy
+import numpy as np
 import copy
 import math
+import datetime
 import Util
 
 class ParticleFilterCoplanarity:
 
 	def __init__(self):
-		self.var_sys = 1.0
-		self.var_obs = 1.0
+		pass
 		
 	def setFocus(self, f_):
 		self.focus = f_
 		
-	def setParameter(self, param1, param2, param3, param4, param5):
-		self.noise_a_sys = param1 # system noise of acceleration　加速度のシステムノイズ
-		self.noise_g_sys = param2 # system noise of gyro　ジャイロのシステムノイズ
-		self.noise_a_obs = param3 # observation noise of acceleration　加速度の観測ノイズ
-		self.noise_g_obs = param4 # observation noise of gyro　ジャイロの観測ノイズ
-		self.noise_coplanarity_obs = param5 # observation noise of coplanarity 共面条件の観測ノイズ
-	
-		self.dt_camera = 0.1 # time delta at camera step カメラ観測時の Δt
-		self.dt2_camera = 0.5 * self.dt_camera * self.dt_camera # time delta at camera step カメラ観測時の 1/2*Δt^2
+	def setParameter(self, param1, param2):
+		self.noise_x_sys = param1 # system noise of position　位置のシステムノイズ
+		self.noise_coplanarity = param2 # observation noise of coplanarity 共面条件の観測ノイズ
 
-	def f(self, dt, X):
+	def f(self, dt, dt2, dt_camera, X, X1):
 		""" Transition model
 		- 状態方程式
 			x_t = f(x_t-1) + w
@@ -37,51 +31,16 @@ class ParticleFilterCoplanarity:
 
 		X_new = copy.deepcopy(X)
 		
-		dt2 = 0.5 * dt * dt
+		# Transition with noise
+		#w_mean = np.zeros(3) # mean of noise
+		#w_cov_x = np.eye(3) * self.noise_x_sys # covariance matrix of noise (accel)
+		#w_x = np.random.multivariate_normal(w_mean, w_cov_x) # generate random
+		w_x = np.random.normal(0, self.noise_x_sys, 3)
 		
-		"""# Simple transition
-		X_new.x = X.x + dt*X.v + dt2*X.a
-		X_new.v = X.v + dt*X.a
+		X_new.x = X.x + dt*X.v + dt2*X.a + w_x
+		X_new.v = (X_new.x - X1.x)/dt_camera
 		X_new.a = X.a
 		X_new.o = X.o
-		"""
-		
-		# Transition with noise (only x,v)
-		w_mean = numpy.zeros(3) # mean of noise
-		w_cov_a = numpy.eye(3) * self.noise_a_sys # covariance matrix of noise (accel)
-		w_a = numpy.random.multivariate_normal(w_mean, w_cov_a) # generate random
-		
-		X_new.x = X.x + dt*X.v + dt2*X.a + self.dt2_camera*w_a
-		X_new.v = X.v + dt*X.a + self.dt_camera*w_a
-		X_new.a = X.a
-		X_new.o = X.o
-		
-		
-		"""  # Transition with noise
-		w_mean = numpy.zeros(3) # mean of noise
-		w_cov_a = numpy.eye(3) * self.noise_a_sys # covariance matrix of noise (accel)
-		w_a = numpy.random.multivariate_normal(w_mean, w_cov_a) # generate random
-		w_cov_g = numpy.eye(3) * self.noise_g_sys # covariance matrix of noise (gyro)
-		w_g = numpy.random.multivariate_normal(w_mean, w_cov_g) # generate random
-		
-		X_new.x = X.x + dt*X.v + dt2*X.a + dt2*w_a
-		X_new.v = X.v + dt*X.a + dt*w_a
-		X_new.a = X.a + w_a
-		X_new.o = X.o + dt*w_g
-		"""
-		
-		"""# Transition with noise (only x Random walk) used for camera only estimation
-		w_mean = numpy.zeros(3) # mean of noise
-		w_cov_a = numpy.eye(3) * self.noise_a_sys # covariance matrix of noise (accel)
-		w_a = numpy.random.multivariate_normal(w_mean, w_cov_a) # generate random
-		w_cov_g = numpy.eye(3) * self.noise_g_sys # covariance matrix of noise (gyro)
-		w_g = numpy.random.multivariate_normal(w_mean, w_cov_g) # generate random
-		
-		X_new.x = X.x + dt*w_a
-		X_new.v = X.v
-		X_new.a = X.a
-		X_new.o = X.o
-		"""
 
 		return X_new
 					
@@ -100,40 +59,62 @@ class ParticleFilterCoplanarity:
 		likelihood : 尤度 Likelihood
 		"""
 		
+		weight = 0.0 # weight (return value)
+		weights = []
+		
+		#total_keypoints = len(keypointPairs)
+		
 		# Generate coplanarity matrix and calc determinant.
 		# | x-x1 y-y1 z-z1 | -> xyz
 		# |  u1   v1   w1  | -> uvw1
 		# |  u2   v2   w2  | -> uvw2
-		coplanarity_determinant_square_total = 0.0
-		xyz = numpy.array([X.x[0] - X1.x[0], X.x[1] - X1.x[1], X.x[2] - X1.x[2]])
+		
+		#coplanarity_determinant_square_total = 0.0
+		xyz = np.array([X.x[0] - X1.x[0], X.x[1] - X1.x[1], X.x[2] - X1.x[2]])
 		for KP in keypointPairs:
 			# Generate uvw1 (time:t-1)
-			uvf1 = numpy.array([KP.x1, -KP.y1, -self.focus]) # Camera coordinates -> Device coordinates
+			uvf1 = np.array([KP.x1, -KP.y1, -self.focus]) # Camera coordinates -> Device coordinates
 			rotX = Util.rotationMatrixX(X1.o[0])
 			rotY = Util.rotationMatrixY(X1.o[1])
 			rotZ = Util.rotationMatrixZ(X1.o[2])
 			# uvw1 = R(z)R(y)R(x)uvf1
-			uvw1 = numpy.dot(rotZ,numpy.dot(rotY,numpy.dot(rotX,uvf1)))
+			uvw1 = np.dot(rotZ,np.dot(rotY,np.dot(rotX,uvf1)))
 			uvw1 /= 100.0 # Adjust scale to decrease calculation error. This doesn't have an influence to estimation.
 			# Generate uvw2 (time:t)
-			uvf2 = numpy.array([KP.x2, -KP.y2, -self.focus]) # Camera coordinates -> Device coordinates
+			uvf2 = np.array([KP.x2, -KP.y2, -self.focus]) # Camera coordinates -> Device coordinates
 			rotX = Util.rotationMatrixX(X.o[0])
 			rotY = Util.rotationMatrixY(X.o[1])
 			rotZ = Util.rotationMatrixZ(X.o[2])
 			# uvw2 = R(z)R(y)R(x)uvf2
-			uvw2 = numpy.dot(rotZ,numpy.dot(rotY,numpy.dot(rotX,uvf2)))
+			uvw2 = np.dot(rotZ,np.dot(rotY,np.dot(rotX,uvf2)))
 			uvw2 /= 100.0 # Adjust scale to decrease calculation error. This doesn't have an influence to estimation.
 			# Generate coplanarity matrix
-			coplanarity_matrix = numpy.array([xyz,uvw1,uvw2])
+			coplanarity_matrix = np.array([xyz,uvw1,uvw2])
 			# Calc determinant
-			determinant = numpy.linalg.det(coplanarity_matrix)
+			determinant = np.linalg.det(coplanarity_matrix)
+			# Weight
+			w = (1.0 / (math.sqrt( 2.0 * math.pi * self.noise_coplanarity**2 ))) * np.exp((determinant**2) / (-2.0 * (self.noise_coplanarity**2)) )
+			weights.append(w)
 			# Add
-			coplanarity_determinant_square_total += (determinant**2)
+			#coplanarity_determinant_square_total += (determinant**2)
 					
-		#print(coplanarity_determinant_square_total)
-					
+		
+		for i,w in enumerate(weights):
+			if(i==0):
+				weight = w
+			else:
+				weight *= w
+		
+		
+		#weight = (1.0 / (math.sqrt( 2.0 * math.pi * (self.noise_coplanarity*total_keypoints)**2 ))) * np.exp(coplanarity_determinant_square_total / (-2.0 * ((self.noise_coplanarity*total_keypoints)**2)) )
+				
+		###########################################
+		#print("weight"),
+		#print(weight)
+		###########################################
+		
 		# return likelihood
-		return numpy.exp(coplanarity_determinant_square_total / (-2.0 * (self.noise_coplanarity_obs**2)) )
+		return weight 
 					
 
 	def resampling(self, X, W, M):
@@ -144,7 +125,7 @@ class ParticleFilterCoplanarity:
 		"""
 		X_resampled = []
 		Minv = 1/float(M)
-		r = numpy.random.rand() * Minv
+		r = np.random.rand() * Minv
 		c = W[0]
 		i = 0
 		for m in range(M):
@@ -152,11 +133,11 @@ class ParticleFilterCoplanarity:
 			while U > c:
 				i += 1
 				c += W[i]
-			X_resampled.append(copy.deepcopy(X[i]))
+			X_resampled.append(X[i])
 		return X_resampled
 					
 
-	def pf_step(self, X, X1, dt, keypointPairs, M):
+	def pf_step(self, X, X1, dt, dt_camera, keypointPairs, M):
 		""" One Step of Sampling Importance Resampling for Particle Filter
 			for IMU sensor
 		Parameters
@@ -174,17 +155,20 @@ class ParticleFilterCoplanarity:
 		# 初期化 init
 		X_predicted = range(M)
 		weight = range(M)
+		
+		dt2 = 0.5 * dt * dt
 
 		for i in range(M):
 			# 推定 prediction
-			X_predicted[i] = self.f(dt, X[i])
+			X_predicted[i] = self.f(dt, dt2, dt_camera, X[i], X1)
 			# 更新 update
-			weight[i] = self.likelihood(keypointPairs, X_predicted[i], X1)
+			weight[i] = self.likelihood(keypointPairs, X_predicted[i], X1)		
+			
 		# 正規化 normalization of weight
 		weight_sum = sum(weight) # 総和 the sum of weights
-		if(weight_sum > 0.5):
+		if(weight_sum > 0.0):
 			# 重みの総和が大きい（尤度が高い）場合 likelihood is high enough
-			######print(weight_sum)
+			print("weight_sum "+str(weight_sum))
 			# 正規化 normalization of weight
 			for i in range(M):
 				weight[i] /= weight_sum
@@ -192,8 +176,8 @@ class ParticleFilterCoplanarity:
 			X_resampled = self.resampling(X_predicted, weight, M)
 		else:
 			# 重みの総和が小さい（尤度が低い）場合 likelihood is low
-			######print(weight_sum),
-			######print("***")
+			print("weight_sum "+str(weight_sum)),
+			print("***")
 			# リサンプリングを行わない No re-sampling
 			X_resampled = copy.deepcopy(X_predicted)
 

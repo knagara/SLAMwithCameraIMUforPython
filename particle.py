@@ -24,6 +24,11 @@ class Particle:
 		self.landmarks = {}
 		
 		
+	def initWithPositionAndOrientation(self, x_, o_):
+		self.x = x_
+		self.o = o_
+		
+		
 	def initWithMu(self,mu):
 		self.x = np.array([mu[0],mu[1],mu[2]])
 		self.o = np.array([mu[9],mu[10],mu[11]])
@@ -36,7 +41,11 @@ class Particle:
 	
 	def initWithStateVector(self, mu, sigma):
 		#generate random state from mu. sigma
-		state = np.random.multivariate_normal(mu, sigma)
+		try:
+			state = np.random.multivariate_normal(mu, sigma)
+		except:
+			print("Error on initWithStateVector np.random.multivariate_normal(mu, sigma)")
+			state = mu
 		
 		self.x = np.array([state[0],state[1],state[2]])
 		self.v = np.array([state[3],state[4],state[5]])

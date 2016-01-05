@@ -6,10 +6,10 @@ from scipy import genfromtxt
 
 
 # ファイル読み込み
-d = genfromtxt("./plot3d/20151221_184924_xyz_2.csv", delimiter=",")
+d = genfromtxt("./plot3d/20160105_172734_25_xyz_2.csv", delimiter=",")
 
 # 表示範囲
-r = 0.2
+r = 0.5
 
 # グラフ作成
 fig = pyplot.figure()
@@ -19,6 +19,7 @@ ax = Axes3D(fig)
 ax.set_xlabel("X-axis")
 ax.set_ylabel("Y-axis")
 ax.set_zlabel("Z-axis")
+
 
 # 表示範囲の設定
 ax.set_xlim(-r, r)

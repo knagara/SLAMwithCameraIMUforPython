@@ -5,7 +5,7 @@ import cv2 as cv
 import numpy as np
 
 def isDeviceMoving(a):
-	if(abs(a) < 0.03):
+	if(abs(a) < 0.005):
 		return False
 	else:
 		return True

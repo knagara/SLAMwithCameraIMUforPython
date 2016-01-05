@@ -27,16 +27,18 @@ from sensor import Sensor
 from state import State
 from image import Image
 #from landmarkObservation import LandmarkObservation
+import warnings
 
 
 # Main method
 def main():
 	global state, sensor, image
+	warnings.filterwarnings('error')
 
 	# ============================== #
 	#       Select model here!       #
 	# ============================== #
-	model = "IMUKF"
+	model = "RBPF"
 	# ===== Model options (state vector type & estimation model) ===== #
 	# - Coplanarity (IMU with Kalman Filter & Camera with Particle Filter. Observation model is coplanarity. State vector is device state only)
 	# - RBPF (FastSLAM. IMU with Particle Filter & Camera with Extended Kalman Filter. Observation model is inverse depth. State vector are device and landmark state. Estimated by Rao-Blackwellized particle filter)
@@ -68,13 +70,10 @@ def main():
 	def publish_state():
 		global state, sensor, image
 		
-		x,v,a,o = state.getState() # Get estimated state vector
-		
 		if(len(sensor.accel) == 0):
 			return
 
-		a_temp = sensor.accel_g
-		o_temp = sensor.orientation
+		x,v,a,o = state.getState() # Get estimated state vector
 
 		# Publish to the server (MQTT broker)
 		client.publish("SLAM/output/all",str(x[0])+"&"+str(x[1])+"&"+str(x[2])+"&"+str(o[0])+"&"+str(o[1])+"&"+str(o[2]))

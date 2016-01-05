@@ -26,14 +26,34 @@ class StateRBPF:
 
 	def __init__(self):
 		# ----- Set parameters here! ----- #
-		self.M = 256 # total number of particles パーティクルの数
-		self.f = 1575.54144 # focus length of camera [px] カメラの焦点距離 [px]
+		self.M = 250 # total number of particles パーティクルの数
+		self.f = 924.1770935 # focus length of camera [px] カメラの焦点距離 [px]
 		# Particle Filter
-		self.noise_a_sys = 0.01 # system noise of acceleration　加速度のシステムノイズ
-		self.noise_g_sys = 0.01 # system noise of gyro　ジャイロのシステムノイズ
-		self.noise_a_sys_camera = 0.1 # system noise of acceleration (at camera step) 加速度のシステムノイズ(カメラ観測時)
-		self.noise_camera = 0.001 # observation noise of camera カメラの観測ノイズ
+		self.noise_x_sys = 0.015 # system noise of position (SD)　位置のシステムノイズ（標準偏差）
+		self.noise_a_sys = 0.1 # system noise of acceleration (SD)　加速度のシステムノイズ（標準偏差）
+		self.noise_g_sys = 0.01 # system noise of orientation (SD)　角度のシステムノイズ（標準偏差）
+		self.noise_a_obs = 0.001 # observation noise of acceleration (SD)　加速度の観測ノイズ（標準偏差）
+		self.noise_g_obs = 0.0001 # observation noise of orientation (SD)　角度の観測ノイズ（標準偏差）
+		self.noise_camera = 10.0 # observation noise of camera (SD) カメラの観測ノイズ（標準偏差）
+		self.noise_coplanarity = 0.1 # observation noise of coplanarity (SD) 共面条件の観測ノイズ（標準偏差）
+		#self.noise_camera = 25.0 # observation noise of camera (SD) カメラの観測ノイズ（標準偏差）
+		#self.noise_coplanarity = 1.0 # observation noise of coplanarity (SD) 共面条件の観測ノイズ（標準偏差）
 		# ----- Set parameters here! ----- #
+		"""
+		シミュレーションデータ時のパラメータ設定
+		# ----- Set parameters here! ----- #
+		self.M = 512 # total number of particles パーティクルの数
+		self.f = 924.1770935 # focus length of camera [px] カメラの焦点距離 [px]
+		# Particle Filter
+		self.noise_x_sys = 0.015 # system noise of position (SD)　位置のシステムノイズ（標準偏差）
+		self.noise_a_sys = 0.1 # system noise of acceleration (SD)　加速度のシステムノイズ（標準偏差）
+		self.noise_g_sys = 0.01 # system noise of orientation (SD)　角度のシステムノイズ（標準偏差）
+		self.noise_a_obs = 0.001 # observation noise of acceleration (SD)　加速度の観測ノイズ（標準偏差）
+		self.noise_g_obs = 0.0001 # observation noise of orientation (SD)　角度の観測ノイズ（標準偏差）
+		self.noise_camera = 2.0 # observation noise of camera (SD) カメラの観測ノイズ（標準偏差）
+		self.noise_coplanarity = 0.01 # observation noise of coplanarity (SD) 共面条件の観測ノイズ（標準偏差）
+		# ----- Set parameters here! ----- #
+		"""
 
 		self.init()
 
@@ -44,10 +64,14 @@ class StateRBPF:
 
 		self.t = 0.0
 		self.t1 = 0.0
+		self.t_camera = 0.0
+		self.t1_camera = 0.0
 		
 		self.accel1 = np.array([0.0, 0.0, 0.0])
 		self.accel2 = np.array([0.0, 0.0, 0.0])
 		self.accel3 = np.array([0.0, 0.0, 0.0])
+		
+		self.P1 = np.identity(3)
 
 		self.initParticleFilter()
 
@@ -55,7 +79,7 @@ class StateRBPF:
 	def initParticleFilter(self):
 		self.pf = ParticleFilter().getParticleFilterClass("RBPF")
 		self.pf.setFocus(self.f)
-		self.pf.setParameter(self.noise_a_sys, self.noise_g_sys, self.noise_a_sys_camera, self.noise_camera) #パーティクルフィルタのパラメータ（ノイズ） parameters (noise)
+		self.pf.setParameter(self.noise_x_sys, self.noise_a_sys, self.noise_g_sys, self.noise_camera, self.noise_coplanarity) #パーティクルフィルタのパラメータ（ノイズ） parameters (noise)
 		self.X = [] # パーティクルセット set of particles
 		self.loglikelihood = 0.0
 		self.count = 1
@@ -99,27 +123,21 @@ class StateRBPF:
 			self.X = self.initParticle(accel, ori)
 		else:
 			# is Device Moving
+			isMoving = [True, True, True]
+			"""
 			self.accel3 = copy.deepcopy(self.accel2)
 			self.accel2 = copy.deepcopy(self.accel1)
 			self.accel1 = copy.deepcopy(accel)
-			
-			isMoving = [True, True, True]
 			if(Util.isDeviceMoving(self.accel1[0]) == False and Util.isDeviceMoving(self.accel2[0]) == False and Util.isDeviceMoving(self.accel3[0]) == False):
 				isMoving[0] = False
 			if(Util.isDeviceMoving(self.accel1[1]) == False and Util.isDeviceMoving(self.accel2[1]) == False and Util.isDeviceMoving(self.accel3[1]) == False):
 				isMoving[1] = False
 			if(Util.isDeviceMoving(self.accel1[2]) == False and Util.isDeviceMoving(self.accel2[2]) == False and Util.isDeviceMoving(self.accel3[2]) == False):
 				isMoving[2] = False
-					
-			# exec particle filter
-			self.X = self.pf.pf_step_IMU(self.X, self.dt, accel, ori, isMoving, self.M)
-			""" The code below is used to get loglikelihood to decide parameters.
-			self.X, likelihood = self.pf.pf_step_IMU(self.X, self.t - self.t1, accel, ori, self.M)
-			self.loglikelihood += math.log(likelihood)
-			self.count += 1
-			if(self.count==300):
-				print(str(self.loglikelihood))
 			"""
+			
+			# exec particle filter
+			self.X = self.pf.pf_step_IMU(self.X, self.dt, accel, ori, isMoving, self.M, self.isFirstTimeCamera)
 
 		if(self.isFirstTimeIMU):
 			self.isFirstTimeIMU = False
@@ -138,10 +156,18 @@ class StateRBPF:
 		# If IMU data has not been arrived yet, do nothing
 		if(self.isFirstTimeIMU):
 			return
-
-		if(self.isFirstTimeCamera):
-			self.isFirstTimeCamera = False
-
+		
+		########################
+		print("=================")
+		print("step "+str(self.step)+"  count "+str(self.count))
+		###########################
+		
+		if(keypoints == "nomatch"):
+			print("nomatch      ***********************")
+			self.count += 1
+			self.step += 1
+			return
+		
 		# Lock IMU process
 		self.lock = True
 
@@ -150,16 +176,38 @@ class StateRBPF:
 		self.t = time_
 		self.dt = self.t - self.t1
 		
+		self.t1_camera = self.t_camera
+		self.t_camera = time_
+		dt_camera = self.t_camera - self.t1_camera
+		
 		# covariance matrix of position
 		P = self.createPositionCovarianceMatrixFromParticle(self.X)
+		#P *= 0.01
 		
-		#self.saveXYZasCSV(self.X,"1")
-		# exec particle filter
-		self.X = self.pf.pf_step_camera(self.X, self.dt, keypoints, self.step, P, self.M)
-		#self.saveXYZasCSV(self.X,"2")
+		if(self.step > 0 and self.step < 5):
+			self.saveXYZasCSV(self.X,"1") 
+			pass
+		
+		if(self.isFirstTimeCamera):
+			# exec particle filter
+			self.X = self.pf.pf_step_camera_firsttime(self.X, self.dt, keypoints, self.step, P, self.M)
+		else:
+			# exec particle filter
+			self.X = self.pf.pf_step_camera(self.X, self.dt, keypoints, self.step, P, self.M, self.X1, self.P1, dt_camera)
+		
+		if(self.step > 0 and self.step < 5):
+			self.saveXYZasCSV(self.X,"2") 
+			pass
+		
+		# Get prev position and orientation
+		prevXx, prevXo = self.getPositionAndOrientation()
+		self.X1 = Particle()
+		self.X1.initWithPositionAndOrientation(prevXx, prevXo)
+		
+		self.P1 = P
 
 		# Count
-		self.count+=1
+		self.count += 1
 		
 		# Step (camera only observation step)
 		self.step += 1
@@ -167,7 +215,39 @@ class StateRBPF:
 		# Unlock IMU process
 		self.lock = False
 		
+		if(self.isFirstTimeCamera):
+			self.isFirstTimeCamera = False
+			
 		
+	"""
+	print Landmark (X,Y,Z)
+	"""
+	def printLandmark(self,X):
+		print("-----")
+		landmarks = self.getLandmarkXYZ(X)
+		for key, value in landmarks.iteritems():
+			print(str(key)+" "),
+			print(value)
+		
+		
+	"""
+	return Landmark (X,Y,Z)
+	"""
+	def getLandmarkXYZ(self,X):
+		allLandmarks = {}
+		# calc sum of landmark XYZ
+		for x in X:
+			for landmarkId, landmark in x.landmarks.iteritems():
+				xyz = landmark.getXYZ()
+				if(allLandmarks.has_key(landmarkId) == False):
+					allLandmarks[landmarkId] = xyz
+				else:
+					allLandmarks[landmarkId] += xyz
+		# calc average of landamrk XYZ
+		for key, value in allLandmarks.iteritems():
+			value /= float(self.M)
+		return allLandmarks
+			
 		
 	"""
 	print (X,Y,Z) of particles
@@ -187,8 +267,10 @@ class StateRBPF:
 		for X_ in X:
 			x.append(X_.x)
 		date = datetime.datetime.now()
+		#datestr = date.strftime("%Y%m%d_%H%M%S_") + "%04d" % (date.microsecond // 1000)
+		#np.savetxt('./data/plot3d/'+datestr+'_xyz_'+appendix+'.csv', x, delimiter=',')
 		datestr = date.strftime("%Y%m%d_%H%M%S_")
-		np.savetxt('./data/plot3d/'+datestr+'xyz_'+appendix+'.csv', x, delimiter=',')
+		np.savetxt('./data/plot3d/'+datestr+str(self.count)+'_xyz_'+appendix+'.csv', x, delimiter=',')
 
 
 	"""
@@ -204,6 +286,17 @@ class StateRBPF:
 		P = np.cov(x.T)
 		return P
 
+
+	"""
+	return estimated state vector of position and orientation
+	"""
+	def getPositionAndOrientation(self):
+		x = []
+		o = []
+		for X_ in self.X:
+			x.append(X_.x)
+			o.append(X_.o)
+		return np.mean(x, axis=0),np.mean(o, axis=0)
 
 
 	"""
