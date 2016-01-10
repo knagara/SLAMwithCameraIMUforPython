@@ -23,12 +23,13 @@ class ParticleFilterRBPF:
 	def setFocus(self, f_):
 		self.focus = f_
 
-	def setParameter(self, param1, param2, param3, param4, param5):
+	def setParameter(self, param1, param2, param3, param4, param5, param6):
 		self.noise_x_sys = param1 # system noise of position (SD)　位置のシステムノイズ（標準偏差）
 		self.noise_a_sys = param2 # system noise of acceleration (SD)　加速度のシステムノイズ（標準偏差）
 		self.noise_g_sys = param3 # system noise of orientation (SD)　角度のシステムノイズ（標準偏差）
 		self.noise_camera = param4 # observation noise of camera (SD) カメラの観測ノイズ（標準偏差）
 		self.noise_coplanarity = param5 # observation noise of coplanarity (SD) 共面条件の観測ノイズ（標準偏差）
+		self.noise_x_sys_coefficient = param6 #パーティクルフィルタのパラメータ（ノイズ） parameters (noise)
 				
 		self.Q = np.diag([self.noise_x_sys**2, self.noise_x_sys**2, self.noise_x_sys**2])
 						
@@ -45,22 +46,14 @@ class ParticleFilterRBPF:
 			x_t = f(x_t-1, u) + w
 			w ~ N(0, sigma)
 		"""
-		
-		"""
-		if(isMoving[0] == False):
-			X.v[0] = 0.0
-		if(isMoving[1] == False):
-			X.v[1] = 0.0
-		if(isMoving[2] == False):
-			X.v[2] = 0.0
-		"""
 	
 		X_new = Particle()
 		X_new.landmarks = X.landmarks
 	
 		# Transition with noise (only x,v)		
 		X_new.x = X.x + dt*X.v + dt2*X.a + noise
-		X_new.v = X.v + dt*X.a
+		#X_new.v = X.v + dt*X.a
+		X_new.v = X.v + dt*X.a + noise*25
 		#X_new.v = X.v + dt*X.a + noise*50
 		X_new.a = accel
 		X_new.o = ori
@@ -97,11 +90,6 @@ class ParticleFilterRBPF:
 				landmark = Landmark()
 				landmark.init(X_, keypoint, P, self.focus)
 				X_.landmarks[landmarkId] = landmark
-				########################################
-				if(self.count == 0):
-					#print(X_.landmarks[landmarkId].sigma)
-					pass
-				########################################
 			else:
 				print("Error on pf_step_camera_firsttime")
 				
@@ -125,25 +113,23 @@ class ParticleFilterRBPF:
 		X_.landmarks = X.landmarks
 		X_.x = X.x + dt*X.v + dt2*X.a + noise
 		#X_.v = X.v + dt*X.a
+		X_.v = X.v + dt*X.a + noise*25
 		#X_.v = X.v + dt*X.a + noise*50
 		X_.a = X.a
 		X_.o = X.o
 		
 		# 速度調整 velocity adjustment
 		#X_.v = ((X_.x - X1.x)/dt_camera)
-		X_.v = ((X_.x - X1.x)/dt_camera)*0.25
+		#X_.v = ((X_.x - X1.x)/dt_camera)*0.25
 		#X_.v = ((X_.x - X1.x)/dt_camera)*0.5
-		"""
-		if(abs(X_.x[0] - X1.x[0]) < 0.05):
-			X_.v[0] = ((X_.x[0] - X1.x[0])/dt_camera)*0.75
-		if(abs(X_.x[1] - X1.x[1]) < 0.05):
-			X_.v[1] = ((X_.x[1] - X1.x[1])/dt_camera)*0.75
-		if(abs(X_.x[2] - X1.x[2]) < 0.05):
-			X_.v[2] = ((X_.x[2] - X1.x[2])/dt_camera)*0.75
-		"""
 		
 		# 共面条件モデルのための計算 Calc for Coplanarity
 		xyz = np.array([X_.x[0] - X1.x[0], X_.x[1] - X1.x[1], X_.x[2] - X1.x[2]])
+		
+		# 前回ランドマークの全てのキーを取得しておく　あとで消す
+		prevLandmarkKeys = []
+		for key in X_.landmarks:
+			prevLandmarkKeys.append(key)
 		
 		for keypoint in keypoints:
 			# ---------------------------- #
@@ -160,15 +146,12 @@ class ParticleFilterRBPF:
 				landmark = Landmark()
 				landmark.initPrev(X1, keypoint, P1, self.focus)
 				X_.landmarks[landmarkId] = landmark
-				########################################
 				if(self.count == 0):
 					count_of_first_observation += 1
-					pass
-				########################################
 			else:
 				# Already observed
 				X_.landmarks[landmarkId] = X_.landmarks[prevLandmarkId]
-				del X_.landmarks[prevLandmarkId]
+				#del X_.landmarks[prevLandmarkId]
 			# Update landmark and calc weight
 			# Observation z				
 			z = np.array([keypoint.x, keypoint.y])
@@ -184,11 +167,13 @@ class ParticleFilterRBPF:
 			w = 0.0
 			try:
 				#w = (1.0 / (math.sqrt( np.linalg.det(2.0 * math.pi * S) ))) * np.exp( -0.5 * ( (z-h).T.dot(Sinv.dot(z-h)) ) )
-				w = (1.0 / (math.sqrt( np.linalg.det(2.0 * math.pi * self.R) ))) * np.exp( -0.5 * ( (z-h).T.dot(self.Rinv.dot(z-h)) ) )
-				#w *= 1000000
-				w *= 1000000
+				#w = (1.0 / (math.sqrt( np.linalg.det(2.0 * math.pi * self.R) ))) * np.exp( -0.5 * ( (z-h).T.dot(self.Rinv.dot(z-h)) ) )
+				# log likelihood
+				#w = np.log(1.0 / (math.sqrt( np.linalg.det(2.0 * math.pi * self.R) ))) + ( -0.5 * ( (z-h).T.dot(self.Rinv.dot(z-h)) ) )
+				w = ( -0.5 * ( (z-h).T.dot(self.Rinv.dot(z-h)) ) )
 			except:
-				print("Error on calc weight at predictionAndUpdateOneParticle: ")
+				print("Error on calc inverse weight ******")
+				w = 0.0
 			
 			# -------------------------- #
 			# Calc weight of Coplanarity #
@@ -214,42 +199,40 @@ class ParticleFilterRBPF:
 			# Calc determinant
 			determinant = np.linalg.det(coplanarity_matrix)
 			# Weight
-			w_coplanarity = (1.0 / (math.sqrt( 2.0 * math.pi * self.noise_coplanarity**2 ))) * np.exp((determinant**2) / (-2.0 * (self.noise_coplanarity**2)) )
-			w_coplanarity *= 10
+			w_coplanarity = 0.0
+			try:
+				#w_coplanarity = (1.0 / (math.sqrt( 2.0 * math.pi * self.noise_coplanarity**2 ))) * np.exp((determinant**2) / (-2.0 * (self.noise_coplanarity**2)) )
+				# log likelihood				
+				#w_coplanarity = np.log(1.0 / (math.sqrt( 2.0 * math.pi * self.noise_coplanarity**2 ))) + ((determinant**2) / (-2.0 * (self.noise_coplanarity**2)) )				
+				w_coplanarity = ((determinant**2) / (-2.0 * (self.noise_coplanarity**2)) )
+			except:
+				print("Error on calc coplanarity weight ******")
+				w_coplanarity = 0.0
 			
-			# ------------------------------------- #
-			# weight of inverse depth * coplanarity #
-			# ------------------------------------- #
-			#w = w                    # inverse depth only
-			#w = w_coplanarity        # coplanarity only
-			w = w * w_coplanarity    # inverse depth * coplanarity
+			# --------------------------- #
+			# inverse depth * coplanarity #
+			# --------------------------- #
+			if(self.count == 0):
+				#print(w),
+				#print(w_coplanarity)
+				pass
+			w = w + w_coplanarity
 			
 			weights.append(w)
 			
-			###############################
-			if(self.count == 0):
-				#print("z-h "),
-				#print(z-h)
-				#print("weight  of inverse "),
-				#print(w)
-				#print("weight coplanarity "),
-				#print(w_coplanarity)
-				pass
-			###############################
-			
-		try:
-			for i,w in enumerate(weights):
-				if(i==0):
-					weight = w
-				else:
-					weight *= w
-		except:
-			print("Error on weight *= w at predictionAndUpdateOneParticle")
-			for i,w in enumerate(weights):
-				if(i==0):
-					weight = (w/100000)
-				else:
-					weight *= (w/100000)
+		# ----------------------------------- #
+		# sum log likelihood of all keypoints #
+		# ----------------------------------- #
+		for i,w in enumerate(weights):
+			if(i==0):
+				weight = w
+			else:
+				weight += w
+				
+		# ----------------------------- #
+		# Average of log likelihood sum #
+		# ----------------------------- #
+		weight /= float(len(weights))
 		
 		###############################
 		#print("weight "+str(weight))
@@ -260,138 +243,11 @@ class ParticleFilterRBPF:
 			pass
 		###########################
 			
+		# 前回ランドマークをすべて消す
+		for key in prevLandmarkKeys:
+			del X_.landmarks[key]
+			
 		self.count+=1
-		
-		return X_, weight
-		
-	
-	def predictionAndUpdateOneParticle2(self, X, dt, dt2, keypoints, step, P):
-		
-		"""
-		FastSLAM2.0
-		"""
-		
-		RSS = [] # residual sum of squares
-		weight = 0.0 # weight (return value)
-		weights = []
-		count_of_known_keypoints = 0
-		x_diff_sum = np.array([0.0, 0.0, 0.0])
-		x_diffs = []
-		
-		# 姿勢予測 prediction of position
-		X_ = Particle()
-		X_.landmarks = X.landmarks
-		X_.x = X.x + dt*X.v + dt2*X.a
-		X_.v = X.v + dt*X.a
-		X_.a = X.a
-		X_.o = X.o
-		
-		for keypoint in keypoints:
-			#############################
-			start_time_ = time.clock() 
-			#############################
-			# previous landmark id
-			prevLandmarkId = (step-1)*10000 + keypoint.prevIndex
-			# new landmark id
-			landmarkId = step*10000 + keypoint.index
-			# The landmark is already observed or not?
-			if(X_.landmarks.has_key(prevLandmarkId) == False):
-				# Fisrt observation
-				# Initialize landmark and append to particle
-				landmark = Landmark()
-				landmark.init(X, keypoint, P, self.focus)
-				X_.landmarks[landmarkId] = landmark
-			else:
-				# Already observed
-				count_of_known_keypoints += 1
-				X_.landmarks[landmarkId] = X_.landmarks[prevLandmarkId]
-				del X_.landmarks[prevLandmarkId]
-				
-				# Actual observation z				
-				z = np.array([keypoint.x, keypoint.y])
-				
-				# 計測予測 prediction of observation
-				#  Calc h(x), Hx, Hm (Jacobian matrix of h with respect to X and Landmark)
-				z__, Hx, Hm = X_.landmarks[landmarkId].calcObservation(X_, self.focus)
-				
-				# 姿勢のカルマンフィルタ Kalman filter of position
-				"""
-				mu_ = copy.deepcopy(X_.landmarks[landmarkId].mu)
-				sigma_ = copy.deepcopy(X_.landmarks[landmarkId].sigma)
-				
-				S = Hm.dot(sigma_.dot(Hm.T)) + self.R
-				L = S + Hx.dot(self.Q.dot(Hx.T))
-				Sinv = np.linalg.inv(S)
-				Linv = np.linalg.inv(L)
-				sigmax = np.linalg.inv( Hx.T.dot(Sinv.dot(Hx)) + np.linalg.inv(self.Q) )
-				mux = sigmax.dot(Hx.T.dot(Sinv.dot(z - z__)))
-				
-				# 姿勢のサンプリング sampling of position
-				x_diff = np.random.multivariate_normal(mux, sigmax)
-				x_diffs.append(x_diff)
-				x_diff_sum += x_diff
-				
-				# 計測再予測 reprediction of observation
-				z_ = X_.landmarks[landmarkId].h(X_.x + x_diff, X_.o, self.focus)
-				
-				# ランドマークの予測 prediction of landmark
-				K = X_.landmarks[landmarkId].sigma.dot(Hm.T.dot(Sinv))
-				X_.landmarks[landmarkId].mu += K.dot(z - z_)
-				X_.landmarks[landmarkId].sigma = X_.landmarks[landmarkId].sigma - K.dot(Hm.dot(X_.landmarks[landmarkId].sigma))
-				"""
-				
-				S = Hm.dot(X_.landmarks[landmarkId].sigma.dot(Hm.T)) + self.R
-				L = S + Hx.dot(self.Q.dot(Hx.T))
-				Sinv = np.linalg.inv(S)
-				Linv = np.linalg.inv(L)
-				sigmax = np.linalg.inv( Hx.T.dot(Sinv.dot(Hx)) + np.linalg.inv(self.Q) )
-				mux = sigmax.dot(Hx.T.dot(Sinv.dot(z - z__)))
-				
-				# 姿勢のサンプリング sampling of position
-				x_diff = np.random.multivariate_normal(mux, sigmax)
-				x_diffs.append(x_diff)
-				x_diff_sum += x_diff
-				
-				# 計測再予測 reprediction of observation
-				z_, XYZ = X_.landmarks[landmarkId].h(X_.x + x_diff, X_.o, self.focus)
-				
-				# ランドマークの予測 prediction of landmark
-				K = X_.landmarks[landmarkId].sigma.dot(Hm.T.dot(Sinv))
-				X_.landmarks[landmarkId].mu += K.dot(z - z_)
-				X_.landmarks[landmarkId].sigma = X_.landmarks[landmarkId].sigma - K.dot(Hm.dot(X_.landmarks[landmarkId].sigma))
-				
-				
-				# 重み計算 calc weight
-				rss_ = (z-z_).T.dot(Linv.dot(z-z_))
-				RSS.append(rss_)
-				w = (1.0 / (math.sqrt( np.linalg.det(2.0 * math.pi * L) ))) * np.exp( -0.5 * ( rss_ ) )
-				weights.append(w)
-				
-				###############################
-				end_time_ = time.clock()
-				if(self.count == 0):
-					#print(XYZ)
-					#print(x_diff)
-					#print ""+str(landmarkId)+" update time = %f" %(end_time_-start_time_)
-					pass
-				###############################
-					
-
-		if(count_of_known_keypoints > 0):
-			# 残差が最小のときの重みと位置を採用する
-			max_index = RSS.index(min(RSS))
-			weight = weights[max_index]
-			weight *= 1000
-			X_.x += x_diffs[max_index]
-			X_.v += (2.0*x_diffs[max_index])/self.dt_camera
-		
-		###############################
-		#print("weight "+str(weight))
-		#if(self.count == 0):
-			#print("weight "+str(weight))
-		###########################
-		self.count+=1
-		###########################
 		
 		return X_, weight
 
@@ -431,7 +287,7 @@ class ParticleFilterRBPF:
 		# Reduce variance of position
 		for X_ in X:
 			difference = X_.x - average
-			X_.x = average + difference*0.2
+			X_.x = average + difference * 0.25
 			X_.v = (X_.x - X1.x)/dt_camera
 			
 		return X
@@ -455,9 +311,7 @@ class ParticleFilterRBPF:
 
 		
 		# 推定と更新 prediction and update
-		###########################
 		self.count=0
-		###########################
 		
 		X_predicted = range(M)
 		weight = range(M)
@@ -466,7 +320,6 @@ class ParticleFilterRBPF:
 		
 		for i in xrange(M):
 			X_predicted[i], weight[i] = self.predictionAndUpdateOneParticle_firsttime(X[i], dt, dt2, keypoints, step, P)
-			#X_predicted[i], weight[i] = self.predictionAndUpdateOneParticle2_firsttime(X[i], dt, dt2, keypoints, step, P)
 		
 		return X_predicted
 
@@ -488,28 +341,35 @@ class ParticleFilterRBPF:
 		"""
 
 		# 初期化 init
-		X_resampled = range(M)
-
-		
-		# 推定と更新 prediction and update
-		###########################
-		self.count=0
-		###########################
-		
-		X_predicted = range(M)
-		weight = range(M)
+		self.count = 0
 		no_resampling = False
+		
+		weight = range(M)
+		log_likelihood = range(M)
+		log_likelihood_max = 0.0
+		X_resampled = range(M)
+		X_predicted = range(M)
 		
 		dt2 = 0.5*dt*dt
 		
+		# 推定と対数尤度計算 prediction and calc log likelihood
 		for i in xrange(M):
-			X_predicted[i], weight[i] = self.predictionAndUpdateOneParticle(X[i], dt, dt2, np.random.normal(0, self.noise_x_sys, 3), keypoints, step, P, X1, P1, dt_camera)
-			#X_predicted[i], weight[i] = self.predictionAndUpdateOneParticle2(X[i], dt, dt2, keypoints, step, P)
+			X_predicted[i], log_likelihood[i] = self.predictionAndUpdateOneParticle(X[i], dt, dt2, np.random.normal(0, self.noise_x_sys, 3), keypoints, step, P, X1, P1, dt_camera)
+			# 一番大きい対数尤度を記憶しておく
+			if(i == 0):
+				log_likelihood_max = log_likelihood[i]
+			else:
+				if(log_likelihood[i] > log_likelihood_max):
+					log_likelihood_max = log_likelihood[i]
+			
+		# 対数尤度から重みを算出 log likelihood -> weight
+		for i in xrange(M):
+			weight[i] = np.exp(log_likelihood[i] - log_likelihood_max)
 		
 		# 正規化 normalization of weight
 		try:
 			weight_sum = sum(weight) # 総和 the sum of weights
-			if(weight_sum > 0.0):
+			if(weight_sum > 1.05):
 				# 重みの総和が大きい（尤度が高い）場合 likelihood is high enough
 				print("weight_sum "+str(weight_sum))     #########################
 				# 正規化 normalization of weight
@@ -523,15 +383,14 @@ class ParticleFilterRBPF:
 				print("weight_sum "+str(weight_sum)),    #########################
 				print("************************************")
 				# リサンプリングを行わない No re-sampling
-				#X_resampled = copy.deepcopy(X_predicted)
 				no_resampling = True
 		except:
 			print("Error on normalization of weight")
 			# リサンプリングを行わない No re-sampling
-			#X_resampled = copy.deepcopy(X_predicted)
 			no_resampling = True
 			
 		if(no_resampling):
+			#X_resampled = copy.deepcopy(X_predicted)
 			X_resampled = self.reduce_particle_variance(X_predicted, X1, dt_camera)
 
 		return X_resampled
@@ -552,17 +411,17 @@ class ParticleFilterRBPF:
 		X_resampled : 次の状態 List updated state
 		"""
 
-		X_predicted = range(M)
+		#X_predicted = range(M)
 		dt2 = 0.5*dt*dt
 		
 		# noise 
-		length = np.linalg.norm(accel) * 0.25
+		length = np.linalg.norm(accel) * self.noise_x_sys_coefficient
 		
 		if(isFirstTimeCamera):
 			length *= 0.1
 		
-		#if(length < self.noise_x_sys):
-		#	length = self.noise_x_sys
+		if(length < 0.0000001):
+			length = self.noise_x_sys
 
 		"""
 		direction = accel
@@ -577,16 +436,4 @@ class ParticleFilterRBPF:
 		
 		#return [self.f_IMU(Xi, dt, dt2, accel, ori, isMoving, rot.dot(np.array([np.random.normal(0, length), np.random.normal(0, (length*0.4)), np.random.normal(0, (length*0.4))]))) for Xi in X]
 		
-		"""
-		for i in xrange(M):
-			noise = np.array([np.random.normal(0, length), np.random.normal(0, (length*0.4)), np.random.normal(0, (length*0.4))])
-			noise = rot.dot(noise)
-			X_predicted[i] = self.f_IMU(X[i], dt, dt2, accel, ori, isMoving, noise)
-		"""
-		
-		return X_predicted
-		
-		
-		
 		#return [self.f_IMU(Xi, dt, dt2, accel, ori, isMoving, np.random.normal(0, self.noise_x_sys, 3)) for Xi in X]
-		

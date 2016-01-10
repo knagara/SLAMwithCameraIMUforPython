@@ -6,10 +6,10 @@ from scipy import genfromtxt
 
 
 # ファイル読み込み
-d = genfromtxt("./plot3d/20160105_172734_25_xyz_2.csv", delimiter=",")
+d = genfromtxt("./output/particle_20160110_161058_22_2.csv", delimiter=",")
 
 # 表示範囲
-r = 0.5
+r = 0.2
 
 # グラフ作成
 fig = pyplot.figure()
