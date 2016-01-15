@@ -201,5 +201,5 @@ class Sensor:
 
 	#Push all data to State class
 	def pushDataToState(self):
-		self.state.setSensorData(self.time, self.accel, self.orientation_g)
+		self.state.setSensorData(self.time, self.accel, self.orientation_g, self.gyro)
 

@@ -26,17 +26,18 @@ class StateRBPF:
 
 	def __init__(self):
 		# ----- Set parameters here! ----- #
-		self.M = 100 # total number of particles パーティクルの数
+		self.M = 500 # total number of particles パーティクルの数
 		self.f = 924.1770935 # focus length of camera [px] カメラの焦点距離 [px]
+		#self.f = 1575.54144 # focus length of camera [px] カメラの焦点距離 [px]
 		# Particle Filter
-		self.noise_x_sys = 0.005 # system noise of position (SD)　位置のシステムノイズ（標準偏差）
-		self.noise_x_sys_coefficient = 0.05 # system noise of position (coefficient)　位置のシステムノイズ（係数）
+		self.noise_x_sys = 0.001 # system noise of position (SD)　位置のシステムノイズ（標準偏差）
+		self.noise_x_sys_coefficient = 0.035 # system noise of position (coefficient)　位置のシステムノイズ（係数）
 		self.noise_a_sys = 0.1 # system noise of acceleration (SD)　加速度のシステムノイズ（標準偏差）
 		self.noise_g_sys = 0.01 # system noise of orientation (SD)　角度のシステムノイズ（標準偏差）
 		self.noise_a_obs = 0.001 # observation noise of acceleration (SD)　加速度の観測ノイズ（標準偏差）
 		self.noise_g_obs = 0.0001 # observation noise of orientation (SD)　角度の観測ノイズ（標準偏差）
-		self.noise_camera = 10.0 # observation noise of camera (SD) カメラの観測ノイズ（標準偏差）
-		self.noise_coplanarity = 0.1 # observation noise of coplanarity (SD) 共面条件の観測ノイズ（標準偏差）
+		self.noise_camera = 5.0 # observation noise of camera (SD) カメラの観測ノイズ（標準偏差）
+		self.noise_coplanarity = 0.05 # observation noise of coplanarity (SD) 共面条件の観測ノイズ（標準偏差）
 		
 		self.init()
 
@@ -53,6 +54,8 @@ class StateRBPF:
 		self.accel1 = np.array([0.0, 0.0, 0.0])
 		self.accel2 = np.array([0.0, 0.0, 0.0])
 		self.accel3 = np.array([0.0, 0.0, 0.0])
+
+		self.gyro = np.array([0.0, 0.0, 0.0])
 		
 		self.P1 = np.identity(3)
 
@@ -89,7 +92,7 @@ class StateRBPF:
 	accel : acceleration in global coordinates
 	ori : orientaion
 	"""
-	def setSensorData(self, time_, accel, ori):
+	def setSensorData(self, time_, accel, ori, gyro_):
 
 		# If process is locked by Image Particle Filter, do nothing
 		if(self.lock):
@@ -100,6 +103,8 @@ class StateRBPF:
 		self.t1 = self.t
 		self.t = time_
 		self.dt = self.t - self.t1
+
+		self.gyro = gyro_
 
 		if(self.isFirstTimeIMU):
 			# init particle
@@ -177,7 +182,7 @@ class StateRBPF:
 			self.X = self.pf.pf_step_camera_firsttime(self.X, self.dt, keypoints, self.step, P, self.M)
 		else:
 			# exec particle filter
-			self.X = self.pf.pf_step_camera(self.X, self.dt, keypoints, self.step, P, self.M, self.X1, self.P1, dt_camera)
+			self.X = self.pf.pf_step_camera(self.X, self.dt, keypoints, self.step, P, self.M, self.X1, self.P1, dt_camera, self.gyro)
 		
 		if(self.step > 0 and self.step < 10):
 			#self.saveXYZasCSV(self.X,"2") 
@@ -319,4 +324,3 @@ class StateRBPF:
 			o.append(X_.o)
 		#print(np.var(x, axis=0))
 		return np.mean(x, axis=0),np.mean(v, axis=0),np.mean(a, axis=0),np.mean(o, axis=0)
-

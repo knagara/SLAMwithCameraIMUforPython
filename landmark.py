@@ -17,8 +17,10 @@ class Landmark:
 	def __init__(self):
 		self.mu = np.array([0.0,0.0,0.0,0.0,0.0,0.0])
 		self.sigma = np.zeros([])
-		self.cx = - 6.361694 # principal point X
-		self.cy = - 22.962158 # principal point Y
+		#self.cx = - 6.361694 # principal point X
+		#self.cy = - 22.962158 # principal point Y
+		self.cx = 0.0 # principal point X
+		self.cy = 0.0 # principal point Y
 		
 	
 	def init(self, X, keypoint, P, focus):

@@ -14,8 +14,11 @@ class KeyPoint:
 
 	def __init__(self,data_):
 		
-		cx = 360.0 - 6.361694 # (image size X)/2 +  principal point X
-		cy = 640.0 - 22.962158 # (image size Y)/2 +  principal point Y
+		#cx = 360.0 - 6.361694 # (image size X)/2 +  principal point X
+		#cy = 640.0 - 22.962158 # (image size Y)/2 +  principal point Y
+		
+		cx = 540.0 # (image size X)/2 +  principal point X
+		cy = 960.0 # (image size Y)/2 +  principal point Y
 		
 		data = data_.split(':')
 		

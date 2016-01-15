@@ -52,8 +52,8 @@ class ParticleFilterRBPF:
 	
 		# Transition with noise (only x,v)		
 		X_new.x = X.x + dt*X.v + dt2*X.a + noise
-		#X_new.v = X.v + dt*X.a
-		X_new.v = X.v + dt*X.a + noise*25
+		X_new.v = X.v + dt*X.a
+		#X_new.v = X.v + dt*X.a + noise*25
 		#X_new.v = X.v + dt*X.a + noise*50
 		X_new.a = accel
 		X_new.o = ori
@@ -98,7 +98,7 @@ class ParticleFilterRBPF:
 		return X_, weight
 	
 
-	def predictionAndUpdateOneParticle(self, X, dt, dt2, noise, keypoints, step, P, X1, P1, dt_camera):
+	def predictionAndUpdateOneParticle(self, X, dt, dt2, noise, keypoints, step, P, X1, P1, dt_camera, noise_o):
 		
 		"""
 		FastSLAM1.0
@@ -113,14 +113,15 @@ class ParticleFilterRBPF:
 		X_.landmarks = X.landmarks
 		X_.x = X.x + dt*X.v + dt2*X.a + noise
 		#X_.v = X.v + dt*X.a
-		X_.v = X.v + dt*X.a + noise*25
+		#X_.v = X.v + dt*X.a + noise*25
 		#X_.v = X.v + dt*X.a + noise*50
 		X_.a = X.a
-		X_.o = X.o
+		#X_.o = X.o
+		X_.o = X.o + noise_o #角度も散らばらせる
 		
 		# 速度調整 velocity adjustment
 		#X_.v = ((X_.x - X1.x)/dt_camera)
-		#X_.v = ((X_.x - X1.x)/dt_camera)*0.25
+		X_.v = ((X_.x - X1.x)/dt_camera)*0.25
 		#X_.v = ((X_.x - X1.x)/dt_camera)*0.5
 		
 		# 共面条件モデルのための計算 Calc for Coplanarity
@@ -279,16 +280,22 @@ class ParticleFilterRBPF:
 		"""
 		
 		x = []
-		# Calc average of position
+		o = []
+		# Calc average
 		for X_ in X:
 			x.append(X_.x)
+			o.append(X_.o)
 		average = np.mean(x, axis=0)
+		average_o = np.mean(o, axis=0)
 		
-		# Reduce variance of position
+		# Reduce variance
 		for X_ in X:
 			difference = X_.x - average
 			X_.x = average + difference * 0.25
 			X_.v = (X_.x - X1.x)/dt_camera
+
+			#difference_o = X_.o - average_o
+			X_.o = average_o
 			
 		return X
 
@@ -324,7 +331,7 @@ class ParticleFilterRBPF:
 		return X_predicted
 
 
-	def pf_step_camera(self, X, dt, keypoints, step, P, M, X1, P1, dt_camera):
+	def pf_step_camera(self, X, dt, keypoints, step, P, M, X1, P1, dt_camera, gyro):
 		""" One Step of Sampling Importance Resampling for Particle Filter
 			for IMU sensor
 		Parameters
@@ -351,10 +358,16 @@ class ParticleFilterRBPF:
 		X_predicted = range(M)
 		
 		dt2 = 0.5*dt*dt
+
+		# 角度のノイズ　noise of orientation
+		noise_o = gyro[2] * 0.1
+		
+		if(noise_o < 0.000001):
+			noise_o = 0.000001
 		
 		# 推定と対数尤度計算 prediction and calc log likelihood
 		for i in xrange(M):
-			X_predicted[i], log_likelihood[i] = self.predictionAndUpdateOneParticle(X[i], dt, dt2, np.random.normal(0, self.noise_x_sys, 3), keypoints, step, P, X1, P1, dt_camera)
+			X_predicted[i], log_likelihood[i] = self.predictionAndUpdateOneParticle(X[i], dt, dt2, np.random.normal(0, self.noise_x_sys, 3), keypoints, step, P, X1, P1, dt_camera, np.array([0.0, 0.0, np.random.normal(0, noise_o)]))
 			# 一番大きい対数尤度を記憶しておく
 			if(i == 0):
 				log_likelihood_max = log_likelihood[i]
@@ -369,7 +382,7 @@ class ParticleFilterRBPF:
 		# 正規化 normalization of weight
 		try:
 			weight_sum = sum(weight) # 総和 the sum of weights
-			if(weight_sum > 1.05):
+			if(weight_sum > 1.01):
 				# 重みの総和が大きい（尤度が高い）場合 likelihood is high enough
 				print("weight_sum "+str(weight_sum))     #########################
 				# 正規化 normalization of weight
@@ -421,7 +434,7 @@ class ParticleFilterRBPF:
 			length *= 0.1
 		
 		if(length < 0.0000001):
-			length = self.noise_x_sys
+			length = 0.0000001
 
 		"""
 		direction = accel

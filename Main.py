@@ -116,7 +116,8 @@ def main():
 
 		elif(str(msg.topic) == "SLAM/input/stop"): #Stop
 			print("[Main.py] stop")
-			client.publish("SLAM/output/stop","true")
+			client.publish("SLAM/output/stop","true")		
+			
 			state.init()
 			sensor.init()
 
