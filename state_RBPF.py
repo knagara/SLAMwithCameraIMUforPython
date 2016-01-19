@@ -26,18 +26,18 @@ class StateRBPF:
 
 	def __init__(self):
 		# ----- Set parameters here! ----- #
-		self.M = 500 # total number of particles パーティクルの数
+		self.M = 200 # total number of particles パーティクルの数
 		self.f = 924.1770935 # focus length of camera [px] カメラの焦点距離 [px]
 		#self.f = 1575.54144 # focus length of camera [px] カメラの焦点距離 [px]
 		# Particle Filter
 		self.noise_x_sys = 0.001 # system noise of position (SD)　位置のシステムノイズ（標準偏差）
-		self.noise_x_sys_coefficient = 0.035 # system noise of position (coefficient)　位置のシステムノイズ（係数）
+		self.noise_x_sys_coefficient = 0.05 # system noise of position (coefficient)　位置のシステムノイズ（係数）
 		self.noise_a_sys = 0.1 # system noise of acceleration (SD)　加速度のシステムノイズ（標準偏差）
 		self.noise_g_sys = 0.01 # system noise of orientation (SD)　角度のシステムノイズ（標準偏差）
 		self.noise_a_obs = 0.001 # observation noise of acceleration (SD)　加速度の観測ノイズ（標準偏差）
 		self.noise_g_obs = 0.0001 # observation noise of orientation (SD)　角度の観測ノイズ（標準偏差）
 		self.noise_camera = 5.0 # observation noise of camera (SD) カメラの観測ノイズ（標準偏差）
-		self.noise_coplanarity = 0.05 # observation noise of coplanarity (SD) 共面条件の観測ノイズ（標準偏差）
+		self.noise_coplanarity = 0.1 # observation noise of coplanarity (SD) 共面条件の観測ノイズ（標準偏差）
 		
 		self.init()
 
@@ -146,8 +146,8 @@ class StateRBPF:
 			return
 		
 		########################
-		print("=================")
-		print("step "+str(self.step)+"  count "+str(self.count))
+		#print("=================")
+		#print("step "+str(self.step)+"  count "+str(self.count))
 		###########################
 		
 		if(keypoints == "nomatch"):
@@ -159,6 +159,8 @@ class StateRBPF:
 		
 		# Lock IMU process
 		self.lock = True
+		
+		#start_time = time.clock()
 
 		# Get current time
 		self.t1 = self.t
@@ -200,6 +202,9 @@ class StateRBPF:
 		
 		# Step (camera only observation step)
 		self.step += 1
+		
+		#end_time = time.clock()
+		#print "%f" %(end_time-start_time)
 		
 		# Unlock IMU process
 		self.lock = False

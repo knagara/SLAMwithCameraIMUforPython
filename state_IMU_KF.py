@@ -13,6 +13,7 @@ This class is generated from "state.py".
 
 import sys
 import math
+import time
 import copy
 import cv2 as cv
 import numpy as np
@@ -57,10 +58,10 @@ class StateIMUKF:
 	accel : acceleration in global coordinates
 	ori : orientaion
 	"""
-	def setSensorData(self, time, accel, ori):
+	def setSensorData(self, time_, accel, ori, gyro):
 
 		self.t1 = self.t
-		self.t = time
+		self.t = time_
 
 		if(self.isFirstTime):
 			#init mu
@@ -69,6 +70,8 @@ class StateIMUKF:
 							accel[0],accel[1],accel[2],
 							ori[0],ori[1],ori[2]])
 		else:
+			
+			#start_time = time.clock()
 			#observation
 			Y = np.array([accel[0],accel[1],accel[2],
 						ori[0],ori[1],ori[2]])
@@ -86,7 +89,8 @@ class StateIMUKF:
 							[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0],
 							[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0],
 							[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0]])
-								
+				
+			"""
 			self.accel3 = copy.deepcopy(self.accel2)
 			self.accel2 = copy.deepcopy(self.accel1)
 			self.accel1 = copy.deepcopy(accel)
@@ -96,9 +100,12 @@ class StateIMUKF:
 				self.mu[4] = 0.0
 			if(Util.isDeviceMoving(self.accel1[2]) == False and Util.isDeviceMoving(self.accel2[2]) == False and Util.isDeviceMoving(self.accel3[2]) == False):
 				self.mu[5] = 0.0
-			
+			"""
 			self.mu, self.sigma = KF.execKF1Simple(Y,self.mu,self.sigma,self.A,self.C,self.Q,self.R)
 
+			#end_time = time.clock()
+			#print "%f" %(end_time-start_time)
+		
 		if(self.isFirstTime):
 			self.isFirstTime = False
 

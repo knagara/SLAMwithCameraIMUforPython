@@ -116,8 +116,8 @@ class ParticleFilterRBPF:
 		#X_.v = X.v + dt*X.a + noise*25
 		#X_.v = X.v + dt*X.a + noise*50
 		X_.a = X.a
-		#X_.o = X.o
-		X_.o = X.o + noise_o #角度も散らばらせる
+		X_.o = X.o
+		#X_.o = X.o + noise_o
 		
 		# 速度調整 velocity adjustment
 		#X_.v = ((X_.x - X1.x)/dt_camera)
@@ -133,6 +133,7 @@ class ParticleFilterRBPF:
 			prevLandmarkKeys.append(key)
 		
 		for keypoint in keypoints:
+			
 			# ---------------------------- #
 			# Calc weight of Inverse Depth #
 			# ---------------------------- #
@@ -217,7 +218,10 @@ class ParticleFilterRBPF:
 				#print(w),
 				#print(w_coplanarity)
 				pass
-			w = w + w_coplanarity
+			
+			w = w + w_coplanarity  # use inverse depth * coplanarity log likelihood
+			#w = w_coplanarity      # use only coplanarity log likelihood
+			#w = w                  # use only inverse depth log likelihood
 			
 			weights.append(w)
 			
@@ -239,8 +243,8 @@ class ParticleFilterRBPF:
 		#print("weight "+str(weight))
 		if(self.count == 0):
 			#print("weight "+str(weight))
-			print("first_ratio "+str(float(count_of_first_observation)/float(len(keypoints)))),
-			print("("+str(count_of_first_observation)+"/"+str(len(keypoints))+")")
+			#print("first_ratio "+str(float(count_of_first_observation)/float(len(keypoints)))),
+			#print("("+str(count_of_first_observation)+"/"+str(len(keypoints))+")")
 			pass
 		###########################
 			
@@ -384,7 +388,7 @@ class ParticleFilterRBPF:
 			weight_sum = sum(weight) # 総和 the sum of weights
 			if(weight_sum > 1.01):
 				# 重みの総和が大きい（尤度が高い）場合 likelihood is high enough
-				print("weight_sum "+str(weight_sum))     #########################
+				#print("weight_sum "+str(weight_sum))     #########################
 				# 正規化 normalization of weight
 				weight = [(w/weight_sum) for w in weight]
 				#for i in xrange(M):
@@ -393,8 +397,8 @@ class ParticleFilterRBPF:
 				X_resampled = self.resampling(X_predicted, weight, M)
 			else:
 				# 重みの総和が小さい（尤度が低い）場合 likelihood is low
-				print("weight_sum "+str(weight_sum)),    #########################
-				print("************************************")
+				#print("weight_sum "+str(weight_sum)),    #########################
+				#print("************************************")
 				# リサンプリングを行わない No re-sampling
 				no_resampling = True
 		except:
