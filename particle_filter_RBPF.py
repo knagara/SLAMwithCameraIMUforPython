@@ -40,7 +40,7 @@ class ParticleFilterRBPF:
 		self.observation = observation_
 
 
-	def f_IMU(self, X, dt, dt2, accel, ori, isMoving, noise):
+	def f_IMU(self, X, dt, dt2, accel, ori, noise):
 		""" Transition model
 		- 状態方程式
 			x_t = f(x_t-1, u) + w
@@ -413,7 +413,7 @@ class ParticleFilterRBPF:
 		return X_resampled
 
 
-	def pf_step_IMU(self, X, dt, accel, ori, isMoving, M, isFirstTimeCamera):
+	def pf_step_IMU(self, X, dt, accel, ori, M, isFirstTimeCamera):
 		""" One Step of Sampling Importance Resampling for Particle Filter
 			for IMU sensor
 		Parameters
@@ -449,7 +449,7 @@ class ParticleFilterRBPF:
 		rot = rotZ.dot(rotY)
 		"""
 		
-		return [self.f_IMU(Xi, dt, dt2, accel, ori, isMoving, np.array([np.random.normal(0, length), np.random.normal(0, (length)), np.random.normal(0, (length))])) for Xi in X]
+		return [self.f_IMU(Xi, dt, dt2, accel, ori, np.array([np.random.normal(0, length), np.random.normal(0, (length)), np.random.normal(0, (length))])) for Xi in X]
 		
 		#return [self.f_IMU(Xi, dt, dt2, accel, ori, isMoving, rot.dot(np.array([np.random.normal(0, length), np.random.normal(0, (length*0.4)), np.random.normal(0, (length*0.4))]))) for Xi in X]
 		

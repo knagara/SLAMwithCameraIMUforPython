@@ -110,22 +110,8 @@ class StateRBPF:
 			# init particle
 			self.X = self.initParticle(accel, ori)
 		else:
-			# is Device Moving
-			isMoving = [True, True, True]
-			"""
-			self.accel3 = copy.deepcopy(self.accel2)
-			self.accel2 = copy.deepcopy(self.accel1)
-			self.accel1 = copy.deepcopy(accel)
-			if(Util.isDeviceMoving(self.accel1[0]) == False and Util.isDeviceMoving(self.accel2[0]) == False and Util.isDeviceMoving(self.accel3[0]) == False):
-				isMoving[0] = False
-			if(Util.isDeviceMoving(self.accel1[1]) == False and Util.isDeviceMoving(self.accel2[1]) == False and Util.isDeviceMoving(self.accel3[1]) == False):
-				isMoving[1] = False
-			if(Util.isDeviceMoving(self.accel1[2]) == False and Util.isDeviceMoving(self.accel2[2]) == False and Util.isDeviceMoving(self.accel3[2]) == False):
-				isMoving[2] = False
-			"""
-			
 			# exec particle filter
-			self.X = self.pf.pf_step_IMU(self.X, self.dt, accel, ori, isMoving, self.M, self.isFirstTimeCamera)
+			self.X = self.pf.pf_step_IMU(self.X, self.dt, accel, ori, self.M, self.isFirstTimeCamera)
 
 		if(self.isFirstTimeIMU):
 			self.isFirstTimeIMU = False
