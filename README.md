@@ -79,7 +79,7 @@ server.conf
 ~~~
 >pip install paho-mqtt
 ~~~
-4.'server.conf'という名前のファイルをMain.pyの親ディレクトリに作成する
+4.server.confという名前のファイルをMain.pyの親ディレクトリに作成する
 ~~~
 server.conf
 [フォーマット] ipaddress&port&username&password
