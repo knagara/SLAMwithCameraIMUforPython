@@ -22,15 +22,21 @@
 ~~~
 >pip install paho-mqtt
 ~~~
-4.Run Main.py 
+4.Create a single line text file named 'server.conf' on the parent directory of Main.py.
+~~~
+server.conf
+[Format] ipaddress&port&username&password
+[Example] 160.16.xxx.xxx&61613&admin&password
+~~~
+5.Run Main.py 
 ~~~
 >python Main.py
 ~~~
-5.Start Android App
+6.Start Android App
 
-6.Now the program is receiving sensor data and estimate smartphone location, also publishing it to MQTT broker.
+7.Now the program is receiving sensor data and estimate smartphone location, also publishing it to MQTT broker.
 
-7.If you want to save estimated data as CSV, run GetOutputData.py
+8.If you want to save estimated data as CSV, run GetOutputData.py
 ~~~
 >python ./data/GetOutputData.py
 ~~~
@@ -73,15 +79,21 @@
 ~~~
 >pip install paho-mqtt
 ~~~
-4.Main.pyを起動
+4.'server.conf'という名前のファイルをMain.pyの親ディレクトリに作成する
+~~~
+server.conf
+[フォーマット] ipaddress&port&username&password
+[例] 160.16.xxx.xxx&61613&admin&password
+~~~
+5.Main.pyを起動
 ~~~
 >python Main.py
 ~~~
-5.Androidアプリを起動
+6.Androidアプリを起動
 
-6.センサデータを受信し、位置の推定が始まります。推定結果はMQTTブローカーに送信されます。
+7.センサデータを受信し、位置の推定が始まります。推定結果はMQTTブローカーに送信されます。
 
-7.推定結果をCSVファイルに保存したい場合は、GetOutputData.pyを起動
+8.推定結果をCSVファイルに保存したい場合は、GetOutputData.pyを起動
 ~~~
 >python ./data/GetOutputData.py
 ~~~
